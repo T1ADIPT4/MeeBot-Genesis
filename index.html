@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -12,18 +11,19 @@
         theme: {
           extend: {
             colors: {
-              'brand-bg': '#0D1117',
-              'brand-surface': '#161B22',
-              'brand-border': '#30363D',
-              'brand-primary': '#58A6FF',
-              'brand-secondary': '#F778BA',
-              'brand-text': '#C9D1D9',
-              'brand-text-secondary': '#8B949E',
+              'meebot-bg': '#0D0C1D',
+              'meebot-surface': '#1A1833',
+              'meebot-border': '#33315C',
+              'meebot-primary': '#00CFE8',
+              'meebot-accent': '#FF1B93',
+              'meebot-text-primary': '#F0F0FF',
+              'meebot-text-secondary': '#A0A0C0',
             },
             animation: {
               'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
               'fade-in': 'fadeIn 0.5s ease-out forwards',
               'glow': 'glow 2s ease-in-out infinite alternate',
+              'brand-glow': 'brand-glow 3s ease-in-out infinite',
             },
             keyframes: {
               fadeIn: {
@@ -32,10 +32,24 @@
               },
               glow: {
                 'from': {
-                  boxShadow: '0 0 5px #58A6FF, 0 0 10px #58A6FF, 0 0 15px #F778BA'
+                  boxShadow: '0 0 5px #00CFE8, 0 0 10px #00CFE8, 0 0 15px #FF1B93'
                 },
                 'to': {
-                  boxShadow: '0 0 10px #58A6FF, 0 0 20px #F778BA, 0 0 25px #F778BA'
+                  boxShadow: '0 0 10px #00CFE8, 0 0 20px #FF1B93, 0 0 25px #FF1B93'
+                }
+              },
+              'confetti-fall': {
+                '0%': { transform: 'translateY(-10vh) rotateZ(0deg) rotateY(0deg)' },
+                '100%': { transform: 'translateY(110vh) rotateZ(720deg) rotateY(360deg)' }
+              },
+              'brand-glow': {
+                '0%, 100%': {
+                  filter: 'drop-shadow(0 0 3px #00CFE8)',
+                  color: '#00CFE8',
+                },
+                '50%': {
+                  filter: 'drop-shadow(0 0 6px #FF1B93)',
+                  color: '#FF1B93',
                 }
               }
             }
@@ -50,12 +64,13 @@
     "react": "https://aistudiocdn.com/react@^19.2.0",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "lucide-react": "https://aistudiocdn.com/lucide-react@^0.553.0",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.1"
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.1",
+    "@vercel/node": "https://aistudiocdn.com/@vercel/node@^5.5.6"
   }
 }
 </script>
 </head>
-  <body class="bg-brand-bg text-brand-text">
+  <body class="bg-meebot-bg text-meebot-text-primary">
     <div id="root"></div>
   </body>
 </html>

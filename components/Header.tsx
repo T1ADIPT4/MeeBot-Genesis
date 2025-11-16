@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Menu } from 'lucide-react';
 
@@ -9,11 +8,11 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ title, onMenuClick }) => {
   return (
-    <header className="flex items-center justify-between h-16 px-4 bg-brand-bg border-b border-brand-border md:px-6">
+    <header className="flex items-center justify-between h-16 px-4 bg-meebot-bg border-b border-meebot-border md:px-6">
       <div className="flex items-center">
         <button
           onClick={onMenuClick}
-          className="p-2 mr-2 -ml-2 text-brand-text-secondary rounded-full md:hidden hover:bg-brand-surface focus:outline-none focus:ring-2 focus:ring-brand-primary"
+          className="p-2 mr-2 -ml-2 text-meebot-text-secondary rounded-full md:hidden hover:bg-meebot-surface focus:outline-none focus:ring-2 focus:ring-meebot-primary"
           aria-label="Toggle sidebar"
         >
           <Menu className="w-6 h-6" />

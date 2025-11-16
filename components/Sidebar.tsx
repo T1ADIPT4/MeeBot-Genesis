@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Bot, LayoutDashboard, Sparkles, Settings } from 'lucide-react';
+import { Bot, LayoutDashboard, Sparkles, Settings, FileText, Palette, ArrowRightLeft } from 'lucide-react';
 import type { NavigationItem } from '../types';
 
 interface SidebarProps {
@@ -15,8 +14,8 @@ const NavLink: React.FC<{
   onClick: () => void;
 }> = ({ item, isActive, onClick }) => {
   const baseClasses = "flex items-center w-full px-4 py-3 text-sm font-medium transition-colors duration-200 rounded-lg";
-  const activeClasses = "bg-brand-primary/20 text-brand-primary";
-  const inactiveClasses = "text-brand-text-secondary hover:bg-brand-surface hover:text-brand-text";
+  const activeClasses = "bg-meebot-primary/20 text-meebot-primary";
+  const inactiveClasses = "text-meebot-text-secondary hover:bg-meebot-surface hover:text-meebot-text-primary";
 
   return (
     <a
@@ -37,7 +36,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPath, navigate, isOpen 
   const navigationItems = React.useMemo<NavigationItem[]>(() => [
     { path: '/', title: 'Dashboard', icon: LayoutDashboard },
     { path: '/genesis', title: 'MeeBot Genesis', icon: Bot },
+    { path: '/migration', title: 'Migration', icon: ArrowRightLeft },
+    { path: '/analysis', title: 'Proposal Analysis', icon: FileText },
     { path: '/origins', title: 'Hall of Origins', icon: Sparkles },
+    { path: '/personas', title: 'Personas', icon: Palette },
     { path: '/settings', title: 'Settings', icon: Settings },
   ], []);
   
@@ -46,11 +48,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPath, navigate, isOpen 
   }
 
   return (
-    <aside className={`absolute inset-y-0 left-0 z-30 w-64 px-4 py-8 bg-brand-bg border-r border-brand-border transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-      <div className="flex items-center mb-10">
-        <Bot className="w-8 h-8 text-brand-primary" />
-        <h1 className="ml-3 text-2xl font-bold text-white">MeeChain</h1>
-      </div>
+    <aside className={`absolute inset-y-0 left-0 z-30 w-64 px-4 py-8 bg-meebot-bg border-r border-meebot-border transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <a
+        href="#/"
+        onClick={(e) => {
+          e.preventDefault();
+          navigate('/');
+        }}
+        className="flex items-center mb-10 group"
+      >
+        <Bot className="w-8 h-8 text-meebot-primary transition-transform duration-300 group-hover:rotate-12" />
+        <h1 className="ml-3 text-2xl font-bold text-white transition-colors duration-300 group-hover:text-meebot-accent">MeeChain</h1>
+      </a>
       <nav className="space-y-2">
         {navigationItems.map((item) => (
           <NavLink

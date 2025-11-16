@@ -1,35 +1,70 @@
+import { type MeeBotMetadata } from '../types';
 
-import { MeeBotPersona, type MeeBotMetadata } from '../types';
-
-// Using simple 1x1 pixel base64 encoded images as placeholders.
-// In a real app, these would be the URLs from the image generation service.
 export const mockMeeBots: MeeBotMetadata[] = [
   {
-    persona: MeeBotPersona.Creative,
+    id: 'mb-001',
+    name: 'MeeBot #7342',
+    persona: 'Creative Soul',
+    soul_prompt: 'A radiant, crystalline bot holding a glowing lotus flower.',
     description: 'A radiant, crystalline bot holding a glowing lotus flower.',
-    mood: 'serene',
-    imageDataUrl: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABALDA4MChAODQ4SERATGCgaGBYWGDEjJR0oOjM9PDkzODdASFxOQERXRTc4UG1RV19iZ2hnPk1xeXBkeFxlZ2P/2wBDARESEhgVGC8aGi9jQjhCY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2P/wgARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAn/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAEBCZP/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAEFAn//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEDAQE/AX//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAECAQE/AX//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAY/An//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAE/IX//2gAMAwEAAgADAAAAEAD/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEDAQE/EH//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAECAQE/EH//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAE/EH//2gAIAQEDAT8Qf//EABQQAQAAAAAAAAAAAAAAAAAAAFD/2gAIAQIDAT8Qf//EABQQAQAAAAAAAAAAAAAAAAAAAFD/2gAIAQEAAT8hf//Z',
+    emotion: 'serene',
+    image: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABALDA4MChAODQ4SERATGCgaGBYWGDEjJR0oOjM9PDkzODdASFxOQERXRTc4UG1RV19iZ2hnPk1xeXBkeFxlZ2P/2wBDARESEhgVGC8aGi9jQjhCY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2P/wgARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAn/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAEBCZP/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAEFAn//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEDAQE/AX//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAECAQE/AX//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAY/An//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAE/IX//2gAMAwEAAgADAAAAEAD/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEDAQE/EH//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAECAQE/EH//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAE/EH//2gAIAQEDAT8Qf//EABQQAQAAAAAAAAAAAAAAAAAAAFD/2gAIAQIDAT8Qf//EABQQAQAAAAAAAAAAAAAAAAAAAFD/2gAIAQEAAT8hf//Z',
     createdAt: 1672531200000,
+    creator: '0x123...abc',
+    language: 'en',
+    voice_message: 'Creativity is the soul of the universe.',
+    external_url: 'https://meechain.app/meebot/7342',
+    txHash: '0x1a2b3c...',
+    tokenURI: 'ipfs://bafybeicg2kl4zdo6hzhh5d3yln7ajpauxp5idquommgj4n4pw2ojt2slbe',
+    chainName: 'Sepolia',
+    chainId: 11155111,
+    attributes: [
+      { trait_type: 'Persona', value: 'Creative Soul' },
+      { trait_type: 'Emotion', value: 'serene' },
+      { trait_type: 'VoiceStyle', value: 'Calm' }
+    ],
+    miningGift: {
+      program: 'DreamWeaver Miner',
+      boost: 'x1.5 Creativity',
+      duration: '24h',
+      activatedAt: 1672531260000,
+    },
+    memory: [
+      { type: 'Mint', message: 'MeeBot #7342 was born from a creative soul.', timestamp: 1672531200000, status: 'confirmed' },
+      { type: 'MiningGift', message: 'MeeBot #7342 was gifted the "DreamWeaver Miner".', timestamp: 1672531260000, status: 'confirmed' },
+    ]
   },
   {
-    persona: MeeBotPersona.Guardian,
+    id: 'mb-002',
+    name: 'MeeBot #1099',
+    persona: 'Guardian Protector',
+    soul_prompt: 'A giant bot made of ancient stone and overgrown with moss, standing guard.',
     description: 'A giant bot made of ancient stone and overgrown with moss, standing guard.',
-    mood: 'stoic',
-    imageDataUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAEBgGA5c5G4wAAAABJRU5ErkJggg==', // Placeholder green
+    emotion: 'stoic',
+    image: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAEBgGA5c5G4wAAAABJRU5ErkJggg==', // Placeholder green
     createdAt: 1672617600000,
-  },
-  {
-    persona: MeeBotPersona.Energetic,
-    description: 'A small, quick bot crackling with electrical energy, zipping through the air.',
-    mood: 'excited',
-    imageDataUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', // Placeholder red
-    createdAt: 1672704000000,
-  },
-    {
-    persona: MeeBotPersona.Wise,
-    description: 'An old bot resembling a metallic owl, with gears turning slowly and eyes that glow with wisdom.',
-    mood: 'contemplative',
-    imageDataUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/wcAAwAB/epv2AAAAABJRU5ErkJggg==', // Placeholder white
-    createdAt: 1672790400000,
-  },
+    creator: '0x456...def',
+    language: 'en',
+    voice_message: 'None shall pass.',
+    external_url: 'https://meechain.app/meebot/1099',
+    txHash: '0x4d5e6f...',
+    tokenURI: 'ipfs://bafybeidv42b2vum5hyuzaynphm2v3o2yguw25kpl75swn2xdvpunf3cdna',
+    chainName: 'Sepolia',
+    chainId: 11155111,
+    attributes: [
+      { trait_type: 'Persona', value: 'Guardian Protector' },
+      { trait_type: 'Emotion', value: 'stoic' },
+      { trait_type: 'VoiceStyle', value: 'Deep' }
+    ],
+    miningGift: {
+      program: 'Aegis Core Miner',
+      boost: '+50% Defense',
+      duration: 'Permanent',
+      activatedAt: 1672617660000,
+    },
+    memory: [
+      { type: 'Mint', message: 'MeeBot #1099 materialized, exuding an aura of strength.', timestamp: 1672617600000, status: 'confirmed' },
+      { type: 'MiningGift', message: 'MeeBot #1099 received the permanent "Aegis Core Miner".', timestamp: 1672617660000, status: 'confirmed' },
+    ]
+  }
 ];

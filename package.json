@@ -12,7 +12,8 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "lucide-react": "^0.553.0",
-    "@google/genai": "^1.29.1"
+    "@google/genai": "^1.29.1",
+    "@vercel/node": "^5.5.6"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
