@@ -3,10 +3,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 
 const SETTINGS_STORAGE_KEY = 'meebot-custom-instructions';
 
-const DEFAULT_INSTRUCTIONS = `// Example: "Use a calm, female voice for all speech."
-// Example: "Summarize proposals in a single paragraph, not bullet points."
-// Example: "For image generation, add a 'pixel art' style."
-`;
+const DEFAULT_INSTRUCTIONS = `// Add your MeeBot instructions here...`;
 
 interface SettingsContextType {
   customInstructions: string;

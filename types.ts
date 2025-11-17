@@ -1,5 +1,5 @@
 // FIX: Add import for React to resolve namespace error for React.ComponentType.
-import React from 'react';
+import type { ComponentType } from 'react';
 
 export type Persona = {
   id: string;
@@ -24,7 +24,7 @@ export type Badge = {
   id: string;
   name: string;
   description: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: ComponentType<{ className?: string }>;
   unlockedAt: number;
 };
 
@@ -36,9 +36,29 @@ export type Proposal = {
     analyzedAt: number;
 };
 
+export type Mission = {
+    id: string;
+    title: string;
+    description: string;
+    cadence: 'daily' | 'weekly';
+    reward: {
+        xp?: number;
+        badgeId?: string;
+    };
+    actionType: 'mint' | 'analyze' | 'create_persona';
+    target: number;
+};
+
+export type UserMission = {
+    missionId: string;
+    progress: number;
+    status: 'in_progress' | 'completed';
+    lastUpdatedAt: number;
+};
+
 
 export type MemoryEvent = {
-  type: "Mint" | "MiningGift" | "Badge" | "Proposal" | "EmotionShift" | "Migration";
+  type: "Mint" | "MiningGift" | "Badge" | "Proposal" | "EmotionShift" | "Migration" | "Mission" | "Gift" | "Chat";
   message: string;
   timestamp: number;
   // Fields to support multi-chain finality simulation
@@ -80,5 +100,28 @@ export type MeeBotMetadata = {
 export type NavigationItem = {
   path: string;
   title: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: ComponentType<{ className?: string }>;
+};
+
+export type GovernanceProposal = {
+  id: string;
+  title: string;
+  description: string;
+  relatedMeeBotIds: string[];
+  status: 'approved' | 'pending' | 'rejected';
+  createdAt: number;
+};
+
+export type OnChainProposal = {
+  id: string;
+  title: string;
+  description: string;
+  proposer: string;
+  createdAt: number;
+  voteYes: number;
+  voteNo: number;
+  executed: boolean;
+  chainName: string;
+  txHash: string;
+  relatedMeeBotIds: string[];
 };

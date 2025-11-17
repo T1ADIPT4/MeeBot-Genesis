@@ -8,7 +8,7 @@ export const mockMeeBots: MeeBotMetadata[] = [
     soul_prompt: 'A radiant, crystalline bot holding a glowing lotus flower.',
     description: 'A radiant, crystalline bot holding a glowing lotus flower.',
     emotion: 'serene',
-    image: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABALDA4MChAODQ4SERATGCgaGBYWGDEjJR0oOjM9PDkzODdASFxOQERXRTc4UG1RV19iZ2hnPk1xeXBkeFxlZ2P/2wBDARESEhgVGC8aGi9jQjhCY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2P/wgARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAn/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAEBCZP/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAEFAn//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEDAQE/AX//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAECAQE/AX//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAY/An//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAE/IX//2gAMAwEAAgADAAAAEAD/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEDAQE/EH//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAECAQE/EH//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAE/EH//2gAIAQEDAT8Qf//EABQQAQAAAAAAAAAAAAAAAAAAAFD/2gAIAQIDAT8Qf//EABQQAQAAAAAAAAAAAAAAAAAAAFD/2gAIAQEAAT8hf//Z',
+    image: 'ipfs://bafybeie2gnqaybglq2etcowihk6p3gafps3d4xygmcjzuy5h33a4gq2k2m',
     createdAt: 1672531200000,
     creator: '0x123...abc',
     language: 'en',
@@ -41,7 +41,7 @@ export const mockMeeBots: MeeBotMetadata[] = [
     soul_prompt: 'A giant bot made of ancient stone and overgrown with moss, standing guard.',
     description: 'A giant bot made of ancient stone and overgrown with moss, standing guard.',
     emotion: 'stoic',
-    image: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAEBgGA5c5G4wAAAABJRU5ErkJggg==', // Placeholder green
+    image: 'ipfs://bafybeifvv2m5lpr2uknzs5go2jprxebfvpk2rh4hh2loty3prw4wf4wsei',
     createdAt: 1672617600000,
     creator: '0x456...def',
     language: 'en',

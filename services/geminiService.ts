@@ -1,5 +1,6 @@
 
 import { GoogleGenAI } from "@google/genai";
+import { applyMeeBotInstructions } from './instructionService';
 
 // FIX: Initialize GoogleGenAI directly with process.env.API_KEY and remove manual key checks
 // to align with the provided coding guidelines.
@@ -64,6 +65,10 @@ export async function generateMeeBotImage(
           break;
   }
   
+  // Apply behavior config from custom instructions
+  const behaviorConfig = applyMeeBotInstructions(customInstructions || '');
+  const finalStylePrompt = behaviorConfig.imageStyle === 'pixel' ? `pixel art style, ${stylePrompt}` : stylePrompt;
+
   // Construct a more detailed, structured prompt for higher quality and more consistent results.
   const structuredPrompt = `
 **Primary Subject:** A single, highly-detailed MeeBot character.
@@ -72,7 +77,7 @@ export async function generateMeeBotImage(
 **Visual Description:** ${description}.
 **Mood & Emotion:** The character should clearly express a mood of "${mood}".
 
-**Artistic Style:** ${stylePrompt}.
+**Artistic Style:** ${finalStylePrompt}.
 
 **Composition & Framing:** ${composition}
 

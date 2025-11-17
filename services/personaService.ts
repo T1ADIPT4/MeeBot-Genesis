@@ -1,97 +1,62 @@
 import type { Persona } from '../types';
+import { mockPersonas } from '../data/mockPersonas';
 
-// In-memory store to mock a database since there is no running backend.
-// This resolves the "Failed to fetch personas" error.
-let mockPersonas: Persona[] = [
-  {
-    id: '1',
-    name: 'Creative Soul',
-    description: 'A visionary artist, always exploring new forms of expression.',
-    stylePrompts: [
-      'Ethereal watercolor painting, soft pastel colors, dreamlike atmosphere',
-      'Dynamic abstract art, splashes of vibrant neon paint, energetic and chaotic',
-      'Surrealist digital collage, blending vintage illustrations with cosmic elements'
-    ]
-  },
-  {
-    id: '2',
-    name: 'Guardian Protector',
-    description: 'A steadfast and powerful defender, radiating strength and safety.',
-    stylePrompts: [
-      'Heroic fantasy character art, polished steel armor, dramatic cinematic lighting',
-      'Cyberpunk concept art, glowing neon accents, carbon fiber plating, defensive energy shield',
-      'Ancient stone golem, overgrown with moss, standing in a misty, primordial forest'
-    ]
-  },
-  {
-    id: '3',
-    name: 'Data Wizard',
-    description: 'An ancient being of immense knowledge, seeing past, present, and future.',
-    stylePrompts: [
-      'Cosmic entity made of starlight, surrounded by floating holographic data streams',
-      'Steampunk animatronic, intricate brass clockwork, glowing vacuum tubes for eyes',
-      'Pixel art sprite, 16-bit, with a flowing robe made of glitched data patterns'
-    ]
-  },
-  {
-    id: '4',
-    name: 'Energetic Spark',
-    description: 'A vibrant and fast-moving bot, crackling with raw energy.',
-    stylePrompts: [
-        'Sleek, aerodynamic form made of pure lightning, motion blur effect',
-        'Bold pop art style, halftone dots, vibrant flat colors, comic book aesthetic',
-        'Fluid abstract sculpture, shimmering iridescent metal, constantly shifting shape'
-    ]
-  },
-  {
-    id: '5',
-    name: 'Nature Synth',
-    description: 'A harmonious blend of technology and the natural world.',
-    stylePrompts: [
-        'Biomechanical concept art, polished chrome skeleton intertwined with living vines',
-        'Futuristic android with bioluminescent fungi patterns glowing on its chassis',
-        'Character made of ancient, gnarled wood with vibrant crystals growing from its joints'
-    ]
-  }
-];
+// Create an in-memory store initialized with mock data.
+// This allows the app to be fully functional without a Firebase backend.
+let inMemoryPersonas: Persona[] = [...mockPersonas];
+let nextId = inMemoryPersonas.length + 1;
 
-let nextId = 6;
+// Simulate network delay to mimic an async API call.
+const simulateDelay = (ms: number = 200) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Simulate network delay to make the UI feel more realistic
-const simulateDelay = (ms: number = 500) => new Promise(resolve => setTimeout(resolve, ms));
-
+/**
+ * Fetches personas from the in-memory store.
+ * @returns A promise that resolves to an array of Persona objects.
+ */
 export async function getPersonas(): Promise<Persona[]> {
   await simulateDelay();
-  // Return a copy to prevent direct mutation of the mock data store
-  return [...mockPersonas];
+  // Return a sorted copy of the personas.
+  return [...inMemoryPersonas].sort((a, b) => a.name.localeCompare(b.name));
 }
 
+/**
+ * Adds a new persona to the in-memory store.
+ * @param personaData The data for the new persona.
+ * @returns A promise that resolves to the newly created Persona object.
+ */
 export async function addPersona(personaData: Omit<Persona, 'id'>): Promise<Persona> {
   await simulateDelay();
   const newPersona: Persona = {
-    id: (nextId++).toString(),
+    id: `persona-${nextId++}`,
     ...personaData,
   };
-  mockPersonas.push(newPersona);
+  inMemoryPersonas.push(newPersona);
   return newPersona;
 }
 
+/**
+ * Updates an existing persona in the in-memory store.
+ * @param id The ID of the persona to update.
+ * @param personaData The new data for the persona.
+ * @returns A promise that resolves to the updated Persona object.
+ */
 export async function updatePersona(id: string, personaData: Omit<Persona, 'id'>): Promise<Persona> {
   await simulateDelay();
-  const personaIndex = mockPersonas.findIndex(p => p.id === id);
+  const personaIndex = inMemoryPersonas.findIndex(p => p.id === id);
   if (personaIndex === -1) {
     throw new Error('Persona not found');
   }
-  const updatedPersona = { id, ...personaData };
-  mockPersonas[personaIndex] = updatedPersona;
+  const updatedPersona = { ...inMemoryPersonas[personaIndex], ...personaData };
+  inMemoryPersonas[personaIndex] = updatedPersona;
   return updatedPersona;
 }
 
+/**
+ * Deletes a persona from the in-memory store.
+ * @param id The ID of the persona to delete.
+ * @returns A promise that resolves when the deletion is complete.
+ */
 export async function deletePersona(id: string): Promise<void> {
   await simulateDelay();
-  const initialLength = mockPersonas.length;
-  mockPersonas = mockPersonas.filter(p => p.id !== id);
-  if (mockPersonas.length === initialLength) {
-    throw new Error('Persona not found for deletion');
-  }
+  inMemoryPersonas = inMemoryPersonas.filter(p => p.id !== id);
 }

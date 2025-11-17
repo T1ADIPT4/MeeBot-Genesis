@@ -14,6 +14,10 @@ import { PersonaManagementPage } from './components/pages/PersonaManagementPage'
 import { MeeBotProvider, useMeeBots } from './contexts/MeeBotContext';
 import { BadgeNotification } from './components/BadgeNotification';
 import { MigrationPage } from './components/pages/MigrationPage';
+import { MissionsPage } from './components/pages/MissionsPage';
+import { GiftingPage } from './components/pages/GiftingPage';
+import { ChatPage } from './components/pages/ChatPage';
+import { GovernancePage } from './components/pages/GovernancePage';
 
 
 const getHeaderTitle = (path: string): string => {
@@ -22,8 +26,16 @@ const getHeaderTitle = (path: string): string => {
       return 'Dashboard';
     case '/genesis':
       return 'MeeBot Genesis Ritual';
+    case '/chat':
+      return 'MeeBot Chat';
+    case '/governance':
+      return 'Governance Hub';
+    case '/gifting':
+      return 'Gifting Center';
     case '/migration':
       return 'Cross-Chain Migration';
+    case '/missions':
+      return 'Missions';
     case '/analysis':
       return 'Proposal Analysis';
     case '/origins':
@@ -56,8 +68,16 @@ const AppLayout: React.FC = () => {
         return <DashboardPage navigate={setRoute} />;
       case '/genesis':
         return <GenesisPage />;
+      case '/chat':
+        return <ChatPage />;
+      case '/governance':
+        return <GovernancePage />;
+      case '/gifting':
+        return <GiftingPage />;
       case '/migration':
         return <MigrationPage />;
+      case '/missions':
+        return <MissionsPage />;
       case '/analysis':
         return <ProposalAnalysisPage />;
       case '/origins':

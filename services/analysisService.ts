@@ -1,5 +1,6 @@
 
 import { GoogleGenAI } from "@google/genai";
+import { applyMeeBotInstructions } from './instructionService';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -26,9 +27,14 @@ export function detectLanguage(text: string): { lang: string; name: string } {
 export async function analyzeProposal(proposal: string, languageName: string, customInstructions?: string): Promise<string> {
   const model = 'gemini-2.5-flash';
   
+  const behaviorConfig = applyMeeBotInstructions(customInstructions || '');
+  const defaultSummaryStyle = behaviorConfig.summaryStyle === 'bullet'
+      ? 'Structure your summary with 3-5 bullet points, highlighting the key objectives, methods, and potential outcomes.'
+      : 'Summarize the proposal in a single, comprehensive paragraph.';
+
   const instructionBlock = customInstructions
     ? `\n**IMPORTANT: Follow these user-defined instructions for your response style and format:**\n${customInstructions}\n`
-    : 'Structure your summary with 3-5 bullet points, highlighting the key objectives, methods, and potential outcomes.';
+    : defaultSummaryStyle;
 
 
   const prompt = `You are an expert analyst. Your task is to provide a clear, concise, and insightful summary of the following proposal.

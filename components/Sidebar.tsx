@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bot, LayoutDashboard, Sparkles, Settings, FileText, Palette, ArrowRightLeft } from 'lucide-react';
+import { Bot, LayoutDashboard, Sparkles, Settings, FileText, Palette, ArrowRightLeft, Target, Gift, MessageSquare, Landmark } from 'lucide-react';
 import type { NavigationItem } from '../types';
 
 interface SidebarProps {
@@ -36,7 +36,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPath, navigate, isOpen 
   const navigationItems = React.useMemo<NavigationItem[]>(() => [
     { path: '/', title: 'Dashboard', icon: LayoutDashboard },
     { path: '/genesis', title: 'MeeBot Genesis', icon: Bot },
+    { path: '/chat', title: 'MeeBot Chat', icon: MessageSquare },
+    { path: '/governance', title: 'Governance', icon: Landmark },
+    { path: '/gifting', title: 'Gifting Center', icon: Gift },
     { path: '/migration', title: 'Migration', icon: ArrowRightLeft },
+    { path: '/missions', title: 'Missions', icon: Target },
     { path: '/analysis', title: 'Proposal Analysis', icon: FileText },
     { path: '/origins', title: 'Hall of Origins', icon: Sparkles },
     { path: '/personas', title: 'Personas', icon: Palette },

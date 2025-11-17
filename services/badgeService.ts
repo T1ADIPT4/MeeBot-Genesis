@@ -1,4 +1,3 @@
-import React from 'react';
 import { Award, Bot, FileText, Palette } from 'lucide-react';
 import type { Badge } from '../types';
 
