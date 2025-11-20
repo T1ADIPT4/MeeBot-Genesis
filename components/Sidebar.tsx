@@ -1,6 +1,7 @@
 import React from 'react';
-import { Bot, LayoutDashboard, Sparkles, Settings, FileText, Palette, ArrowRightLeft, Target, Gift, MessageSquare, Landmark } from 'lucide-react';
+import { LayoutDashboard, Sparkles, Settings, FileText, Palette, ArrowRightLeft, Target, Gift, MessageSquare, Landmark } from 'lucide-react';
 import type { NavigationItem } from '../types';
+import { BrandLogo } from './BrandLogo';
 
 interface SidebarProps {
   currentPath: string;
@@ -35,7 +36,7 @@ const NavLink: React.FC<{
 export const Sidebar: React.FC<SidebarProps> = ({ currentPath, navigate, isOpen }) => {
   const navigationItems = React.useMemo<NavigationItem[]>(() => [
     { path: '/', title: 'Dashboard', icon: LayoutDashboard },
-    { path: '/genesis', title: 'MeeBot Genesis', icon: Bot },
+    { path: '/genesis', title: 'MeeBot Genesis', icon: Sparkles },
     { path: '/chat', title: 'MeeBot Chat', icon: MessageSquare },
     { path: '/governance', title: 'Governance', icon: Landmark },
     { path: '/gifting', title: 'Gifting Center', icon: Gift },
@@ -53,17 +54,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPath, navigate, isOpen 
 
   return (
     <aside className={`absolute inset-y-0 left-0 z-30 w-64 px-4 py-8 bg-meebot-bg border-r border-meebot-border transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-      <a
-        href="#/"
+      <BrandLogo
+        className="mb-10"
         onClick={(e) => {
           e.preventDefault();
           navigate('/');
         }}
-        className="flex items-center mb-10 group"
-      >
-        <Bot className="w-8 h-8 text-meebot-primary transition-transform duration-300 group-hover:rotate-12" />
-        <h1 className="ml-3 text-2xl font-bold text-white transition-colors duration-300 group-hover:text-meebot-accent">MeeChain</h1>
-      </a>
+      />
       <nav className="space-y-2">
         {navigationItems.map((item) => (
           <NavLink

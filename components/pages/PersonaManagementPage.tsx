@@ -20,6 +20,7 @@ const PersonaForm: React.FC<{
 }> = ({ persona, onSave, onClose }) => {
     const [name, setName] = useState(persona?.name || '');
     const [description, setDescription] = useState(persona?.description || '');
+    const [story, setStory] = useState(persona?.story || '');
     const [stylePrompts, setStylePrompts] = useState(persona?.stylePrompts.join('\n') || '');
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState('');
@@ -28,13 +29,13 @@ const PersonaForm: React.FC<{
         e.preventDefault();
         setError('');
         const prompts = stylePrompts.split('\n').map(p => p.trim()).filter(Boolean);
-        if (!name || !description || prompts.length === 0) {
+        if (!name || !description || !story || prompts.length === 0) {
             setError('All fields and at least one style prompt are required.');
             return;
         }
         setIsSaving(true);
         try {
-            await onSave({ name, description, stylePrompts: prompts });
+            await onSave({ name, description, story, stylePrompts: prompts });
             onClose();
         } catch (err) {
             setError('Failed to save persona. Please try again.');
@@ -55,6 +56,10 @@ const PersonaForm: React.FC<{
                 <div>
                     <label htmlFor="description" className="block mb-2 text-sm font-medium text-meebot-text-secondary">Description</label>
                     <input id="description" type="text" value={description} onChange={e => setDescription(e.target.value)} className="w-full p-2 bg-meebot-bg border border-meebot-border rounded-lg"/>
+                </div>
+                 <div>
+                    <label htmlFor="story" className="block mb-2 text-sm font-medium text-meebot-text-secondary">Core Traits & Background Story</label>
+                    <textarea id="story" value={story} onChange={e => setStory(e.target.value)} rows={4} className="w-full p-2 bg-meebot-bg border border-meebot-border rounded-lg"/>
                 </div>
                 <div>
                     <label htmlFor="stylePrompts" className="block mb-2 text-sm font-medium text-meebot-text-secondary">Style Prompts (one per line)</label>
@@ -134,9 +139,10 @@ export const PersonaManagementPage: React.FC = () => {
                     <ul className="divide-y divide-meebot-border">
                         {personas.map(persona => (
                             <li key={persona.id} className="p-4 flex justify-between items-center">
-                                <div>
+                                <div className="flex-1 pr-4">
                                     <h3 className="font-bold text-lg text-white">{persona.name}</h3>
                                     <p className="text-sm text-meebot-text-secondary">{persona.description}</p>
+                                     <p className="text-xs mt-2 text-meebot-text-secondary/80 italic border-l-2 border-meebot-border pl-2">{persona.story}</p>
                                 </div>
                                 <div className="space-x-2">
                                     <button onClick={() => handleOpenEdit(persona)} className="p-2 text-meebot-text-secondary hover:text-meebot-primary"><Edit className="w-5 h-5"/></button>

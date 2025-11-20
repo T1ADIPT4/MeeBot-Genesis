@@ -1,5 +1,7 @@
 {
   "name": "MeeBot Genesis",
   "description": "An application to visualize and create your unique MeeBot using AI. Define its persona and description, and let Gemini's Imagen 4.0 bring it to life.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "microphone"
+  ]
 }

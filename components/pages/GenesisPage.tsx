@@ -1,7 +1,47 @@
+// FIX: Add type declarations for the Web Speech API to resolve TypeScript errors.
+// This is necessary because these APIs are not yet part of the standard DOM typings.
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+}
+
+interface SpeechRecognitionResult extends Array<SpeechRecognitionAlternative> {
+  isFinal: boolean;
+}
+
+interface SpeechRecognitionResultList extends Array<SpeechRecognitionResult> {}
+
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognition extends EventTarget {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  start(): void;
+  stop(): void;
+  abort(): void;
+  onstart: (() => void) | null;
+  onend: (() => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition: new () => SpeechRecognition;
+    webkitSpeechRecognition: new () => SpeechRecognition;
+  }
+}
+
 
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Wand, Zap, AlertTriangle, Bot, Image as ImageIcon, Volume2, LoaderCircle, CheckCircle, Shuffle, Shield, Brush, BrainCircuit, Leaf } from 'lucide-react';
+import { Wand, Zap, AlertTriangle, Bot, Image as ImageIcon, Volume2, LoaderCircle, CheckCircle, Shuffle, Shield, Brush, BrainCircuit, Leaf, Mic } from 'lucide-react';
 import { generateMeeBotImage } from '../../services/geminiService';
 import { speak } from '../../services/ttsService';
 import { useSettings } from '../../contexts/SettingsContext';
@@ -187,6 +227,10 @@ export const GenesisPage: React.FC = () => {
   const { customInstructions } = useSettings();
   const { mintMeeBot } = useMeeBots();
 
+  const [isRecording, setIsRecording] = useState(false);
+  const [speechError, setSpeechError] = useState<string | null>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+
   const selectedPersona = personas.find(p => p.id === selectedPersonaId);
   const [selectedStyle, setSelectedStyle] = useState('');
 
@@ -207,6 +251,7 @@ export const GenesisPage: React.FC = () => {
   useEffect(() => {
     return () => {
       abortControllerRef.current?.abort();
+      recognitionRef.current?.abort();
       if (typeof window !== "undefined" && window.speechSynthesis) {
         window.speechSynthesis.cancel();
       }
@@ -257,6 +302,53 @@ export const GenesisPage: React.FC = () => {
       setIsLoading(false);
     }
   }, [description, selectedPersona, customInstructions, mood, selectedStyle]);
+
+  const handleToggleRecording = useCallback(() => {
+    if (isRecording) {
+      recognitionRef.current?.stop();
+      return;
+    }
+    
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setSpeechError("Speech recognition is not supported in this browser. Please try on Chrome or Safari.");
+      return;
+    }
+
+    const recognition: SpeechRecognition = new SpeechRecognition();
+    recognitionRef.current = recognition;
+
+    recognition.lang = 'en-US';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+      setIsRecording(true);
+      setSpeechError(null);
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+      recognitionRef.current = null;
+    };
+
+    recognition.onerror = (event) => {
+      let message = `Speech recognition error: ${event.error}`;
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        message = "Microphone access denied. Please enable it in your browser's settings to use this feature.";
+      }
+      setSpeechError(message);
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[event.results.length - 1][0].transcript.trim();
+      setDescription(prev => (prev ? prev.trim() + ' ' : '') + transcript);
+    };
+    
+    recognition.start();
+
+  }, [isRecording]);
 
   const handleRandomizeStyle = useCallback(() => {
     if (selectedPersona?.stylePrompts?.length) {
@@ -336,12 +428,12 @@ export const GenesisPage: React.FC = () => {
                   </label>
                   <button
                     onClick={handleRandomizeStyle}
-                    className="flex items-center px-2 py-1 text-xs font-semibold transition-colors rounded-md bg-meebot-surface hover:bg-meebot-border text-meebot-accent disabled:text-meebot-text-secondary/50 disabled:cursor-not-allowed"
+                    className="flex items-center px-3 py-1 text-xs font-semibold transition-colors rounded-md bg-meebot-surface hover:bg-meebot-border text-meebot-accent disabled:text-meebot-text-secondary/50 disabled:cursor-not-allowed"
                     disabled={arePersonasLoading || !selectedPersona?.stylePrompts?.length}
                     aria-label="Randomize art style"
                   >
                     <Shuffle className="w-4 h-4 mr-1" />
-                    Randomize
+                    Randomize Style
                   </button>
                 </div>
                  {arePersonasLoading ? (
@@ -370,14 +462,29 @@ export const GenesisPage: React.FC = () => {
                 <span className="text-xs font-bold text-meebot-accent px-2 py-1 bg-meebot-accent/10 rounded-full mr-2">3</span>
                 Describe Your Vision
               </label>
-              <textarea
-                id="description"
-                rows={4}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="e.g., a small bot made of moss and stone, with glowing mushroom eyes"
-                className="w-full p-3 bg-meebot-surface border border-meebot-border rounded-lg focus:ring-meebot-primary focus:border-meebot-primary"
-              />
+              <div className="relative">
+                <textarea
+                  id="description"
+                  rows={4}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="e.g., a small bot made of moss and stone, with glowing mushroom eyes"
+                  className="w-full p-3 pr-12 bg-meebot-surface border border-meebot-border rounded-lg focus:ring-meebot-primary focus:border-meebot-primary"
+                />
+                <button
+                  type="button"
+                  onClick={handleToggleRecording}
+                  className={`absolute top-1/2 right-3 -translate-y-1/2 p-2 rounded-full transition-colors ${
+                    isRecording
+                      ? 'bg-red-500/20 text-red-500 animate-pulse'
+                      : 'text-meebot-text-secondary hover:bg-meebot-border hover:text-meebot-text-primary'
+                  }`}
+                  aria-label={isRecording ? 'Stop recording' : 'Start recording voice input'}
+                >
+                  <Mic className="w-5 h-5" />
+                </button>
+              </div>
+              {speechError && <p className="mt-2 text-xs text-red-400">{speechError}</p>}
             </div>
             
             <div>

@@ -1,5 +1,6 @@
 import { GoogleGenAI, Chat } from "@google/genai";
 import type { Persona } from '../types';
+import { applyMeeBotInstructions } from './instructionService';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -10,10 +11,20 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
  * @returns A Chat object for the session.
  */
 export function startChatSession(persona: Persona, customInstructions: string): Chat {
+    const behaviorConfig = applyMeeBotInstructions(customInstructions);
+    let emojiInstruction = '';
+    if (behaviorConfig.emojiPreference === 'enabled') {
+        emojiInstruction = 'You should use emojis in your responses to be more expressive.';
+    } else if (behaviorConfig.emojiPreference === 'disabled') {
+        emojiInstruction = 'You must not use any emojis in your responses.';
+    }
+
     const systemInstruction = `You are a MeeBot AI companion. Your persona is "${persona.name}".
 Description: "${persona.description}".
+Background Story: "${persona.story}".
 Your responses must embody this persona. Be creative, engaging, and stay in character.
-${customInstructions ? `\nFollow these additional user instructions:\n${customInstructions}` : ''}`;
+${emojiInstruction}
+${customInstructions ? `\nAdditionally, follow these general user instructions:\n${customInstructions}` : ''}`;
 
     return ai.chats.create({
         model: 'gemini-2.5-flash',

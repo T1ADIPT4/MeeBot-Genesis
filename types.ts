@@ -5,6 +5,7 @@ export type Persona = {
   id: string;
   name: string;
   description: string;
+  story: string;
   stylePrompts: string[];
 };
 

@@ -1,6 +1,8 @@
 
+export type EmojiPreference = 'default' | 'enabled' | 'disabled';
+
 export type MeeBotBehaviorConfig = {
-  useEmojis: boolean;
+  emojiPreference: EmojiPreference;
   avoidGradients: boolean;
   voiceStyle: "CalmFemale" | "Default";
   summaryStyle: "bullet" | "paragraph";
@@ -16,11 +18,18 @@ export type MeeBotBehaviorConfig = {
 export function applyMeeBotInstructions(instructions: string): MeeBotBehaviorConfig {
   const lowerInstructions = instructions.toLowerCase();
   
+  let emojiPreference: EmojiPreference = 'default';
+  if (lowerInstructions.includes("use emojis")) {
+    emojiPreference = 'enabled';
+  } else if (/no emoji|don't use emojis|without emojis|ไม่ใช้ emoji/.test(lowerInstructions)) {
+    emojiPreference = 'disabled';
+  }
+
   const config: MeeBotBehaviorConfig = {
-    useEmojis: lowerInstructions.includes("use emojis"),
+    emojiPreference,
     avoidGradients: lowerInstructions.includes("avoid using gradients"),
-    voiceStyle: lowerInstructions.includes("calm female voice") ? "CalmFemale" : "Default",
-    summaryStyle: lowerInstructions.includes("bullet point") ? "bullet" : "paragraph",
+    voiceStyle: lowerInstructions.includes("calm female voice") || lowerInstructions.includes("เสียงหญิงแบบสงบ") ? "CalmFemale" : "Default",
+    summaryStyle: lowerInstructions.includes("bullet point") || lowerInstructions.includes("แบบ bullet point") ? "bullet" : "paragraph",
     imageStyle: lowerInstructions.includes("pixel art") ? "pixel" : "default",
   };
   
