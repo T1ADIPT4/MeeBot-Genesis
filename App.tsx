@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { useLocation } from './hooks/useLocation';
 import { Sidebar } from './components/Sidebar';
@@ -18,6 +19,8 @@ import { MissionsPage } from './components/pages/MissionsPage';
 import { GiftingPage } from './components/pages/GiftingPage';
 import { ChatPage } from './components/pages/ChatPage';
 import { GovernancePage } from './components/pages/GovernancePage';
+import { MiningPage } from './components/pages/MiningPage';
+import { TransparencyPage } from './components/pages/TransparencyPage';
 
 
 const getHeaderTitle = (path: string): string => {
@@ -44,6 +47,10 @@ const getHeaderTitle = (path: string): string => {
       return 'Settings';
     case '/personas':
       return 'Persona Management';
+    case '/mining':
+      return 'Mining Farm';
+    case '/transparency':
+      return 'Transparency Report';
     default:
       return 'MeeChain';
   }
@@ -86,6 +93,10 @@ const AppLayout: React.FC = () => {
         return <SettingsPage />;
       case '/personas':
         return <PersonaManagementPage />;
+      case '/mining':
+        return <MiningPage />;
+      case '/transparency':
+        return <TransparencyPage />;
       default:
         return <PlaceholderPage title="404 - Not Found" />;
     }

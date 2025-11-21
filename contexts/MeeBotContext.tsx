@@ -1,7 +1,8 @@
+
 import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
-import type { MeeBotMetadata, MemoryEvent, Badge, Proposal, UserMission } from '../types';
+import type { MeeBotMetadata, MemoryEvent, Badge, Proposal, UserMission, MiningState } from '../types';
 import { mockMeeBots } from '../data/mockMeeBots';
-import { activateMiningGift, logMintEvent, logMiningGiftEvent } from '../services/miningService';
+import { activateMiningGift, logMintEvent, logMiningGiftEvent, updateMinerScore } from '../services/miningService';
 import { ALL_BADGES, checkNewBadges } from '../services/badgeService';
 import { speak } from '../services/ttsService';
 import { ALL_MISSIONS, shouldResetMission } from '../services/missionService';
@@ -15,6 +16,7 @@ const MEEBOT_BADGES_KEY = 'meebot-unlocked-badges';
 const MEEBOT_PROPOSALS_KEY = 'meebot-proposals';
 const MEEBOT_PROGRESS_KEY = 'meebot-progress';
 const MEEBOT_MISSIONS_KEY = 'meebot-user-missions';
+const MEEBOT_MINING_KEY = 'meebot-mining-state';
 
 
 // --- Multi-chain Simulation ---
@@ -34,12 +36,14 @@ interface MeeBotContextType {
   proposals: Proposal[];
   progress: { proposalsAnalyzed: number; personasCreated: number; };
   userMissions: UserMission[];
+  miningState: MiningState;
   mintMeeBot: (data: { persona: string, prompt: string, emotion: string, image: string }) => MeeBotMetadata;
   addProposalAnalysis: (proposalText: string, summary: string) => void;
   notifyPersonaCreated: () => void;
   migrateMeeBot: (botId: string, toChainName: string) => Promise<void>;
   giftMeeBot: (botId: string, recipientAddress: string, message: string) => Promise<void>;
   logChatMemory: (botId: string, lastUserMessage: string) => void;
+  executeMining: () => Promise<void>;
   currentBadgeNotification: Badge | null;
   dismissBadgeNotification: () => void;
 }
@@ -100,6 +104,7 @@ export const MeeBotProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [proposals, setProposals] = useState<Proposal[]>(() => loadFromStorage(MEEBOT_PROPOSALS_KEY, []));
   const [progress, setProgress] = useState<{ proposalsAnalyzed: number; personasCreated: number; }>(() => loadFromStorage(MEEBOT_PROGRESS_KEY, { proposalsAnalyzed: 0, personasCreated: 0 }));
   const [userMissions, setUserMissions] = useState<UserMission[]>(() => loadFromStorage(MEEBOT_MISSIONS_KEY, []));
+  const [miningState, setMiningState] = useState<MiningState>(() => loadFromStorage(MEEBOT_MINING_KEY, { points: 0, level: 0, isMining: false, lastMinedAt: 0 }));
   const [currentBadgeNotification, setCurrentBadgeNotification] = useState<Badge | null>(null);
 
   // --- Effects to sync state with localStorage ---
@@ -113,6 +118,7 @@ export const MeeBotProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   useEffect(() => { window.localStorage.setItem(MEEBOT_PROPOSALS_KEY, JSON.stringify(proposals)); }, [proposals]);
   useEffect(() => { window.localStorage.setItem(MEEBOT_PROGRESS_KEY, JSON.stringify(progress)); }, [progress]);
   useEffect(() => { window.localStorage.setItem(MEEBOT_MISSIONS_KEY, JSON.stringify(userMissions)); }, [userMissions]);
+  useEffect(() => { window.localStorage.setItem(MEEBOT_MINING_KEY, JSON.stringify(miningState)); }, [miningState]);
   
   // --- Effect to simulate event confirmation ---
   useEffect(() => {
@@ -213,9 +219,8 @@ export const MeeBotProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     });
   }, [awardBadges]);
   
-  const checkAllBadges = useCallback((currentProgress: { proposalsAnalyzed: number; personasCreated: number; }, meebotCount: number) => {
-    const progressData = { ...currentProgress, meebotCount };
-    // FIX: Explicitly type `new Set()` to `Set<string>` to resolve a TypeScript type inference issue.
+  const checkAllBadges = useCallback((currentProgress: { proposalsAnalyzed: number; personasCreated: number; }, meebotCount: number, currentMiningLevel: number) => {
+    const progressData = { ...currentProgress, meebotCount, miningLevel: currentMiningLevel };
     const existingBadgeIds = new Set<string>(unlockedBadges.map(b => b.id));
     const newlyUnlocked = checkNewBadges(progressData, existingBadgeIds);
     awardBadges(newlyUnlocked);
@@ -262,14 +267,14 @@ export const MeeBotProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     
     setMeebots(prev => {
         const newBotList = [newMeeBot, ...prev];
-        checkAllBadges(progress, newBotList.length);
+        checkAllBadges(progress, newBotList.length, miningState.level);
         return newBotList;
     });
     setTimeline(prev => [...newMeeBot.memory, ...prev].sort((a,b) => b.timestamp - a.timestamp));
 
     updateMissionsOnAction('mint');
     return newMeeBot;
-  }, [progress, checkAllBadges, updateMissionsOnAction]);
+  }, [progress, checkAllBadges, updateMissionsOnAction, miningState.level]);
 
   const migrateMeeBot = useCallback(async (botId: string, toChainName: string) => {
     const fromBot = meebots.find(b => b.id === botId);
@@ -329,21 +334,21 @@ export const MeeBotProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
       setProgress(prev => {
           const updatedProgress = { ...prev, proposalsAnalyzed: prev.proposalsAnalyzed + 1 };
-          checkAllBadges(updatedProgress, meebots.length);
+          checkAllBadges(updatedProgress, meebots.length, miningState.level);
           return updatedProgress;
       });
       updateMissionsOnAction('analyze');
-  }, [meebots.length, checkAllBadges, updateMissionsOnAction]);
+  }, [meebots.length, checkAllBadges, updateMissionsOnAction, miningState.level]);
   
   const notifyPersonaCreated = useCallback(() => {
     updateMissionsOnAction('create_persona');
 
     setProgress(prev => {
         const updatedProgress = { ...prev, personasCreated: prev.personasCreated + 1 };
-        checkAllBadges(updatedProgress, meebots.length);
+        checkAllBadges(updatedProgress, meebots.length, miningState.level);
         return updatedProgress;
     });
-  }, [meebots.length, checkAllBadges, updateMissionsOnAction]);
+  }, [meebots.length, checkAllBadges, updateMissionsOnAction, miningState.level]);
 
   const giftMeeBot = useCallback(async (botId: string, recipientAddress: string, message: string) => {
       const botToGift = meebots.find(b => b.id === botId);
@@ -388,13 +393,82 @@ export const MeeBotProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setTimeline(prev => [chatEvent, ...prev].sort((a,b) => b.timestamp - a.timestamp));
   }, [meebots]);
 
+  // --- Mining Functionality ---
+  const executeMining = useCallback(async () => {
+      if (miningState.isMining) return;
+
+      const now = Date.now();
+      // Simple rate limiting: Prevent mining if less than 2 seconds have passed
+      if (now - miningState.lastMinedAt < 2000) {
+          console.warn("Mining too fast. Cooldown active.");
+          return;
+      }
+
+      setMiningState(prev => ({ ...prev, isMining: true }));
+      
+      // Simulate Smart Contract Latency & Logic
+      // In a real app, this would call the Firebase function /api/mine
+      await new Promise(resolve => setTimeout(resolve, 2500));
+
+      const randomChain = getRandomChain();
+
+      setMiningState(prev => {
+          const newPoints = prev.points + 1;
+          // Smart Contract Logic: Level up every 10 points
+          const newLevel = Math.floor(newPoints / 10); 
+          const levelUp = newLevel > prev.level;
+          
+          // Update timeline
+          const miningEvent: MemoryEvent = {
+              type: 'Mining',
+              message: `Mined 1 Point on ${randomChain.name}.${levelUp ? ` Leveled up to ${newLevel}!` : ''}`,
+              timestamp: now,
+              status: 'staged',
+              chainName: randomChain.name,
+              chainId: randomChain.chainId,
+          };
+          setTimeline(old => [miningEvent, ...old].sort((a,b) => b.timestamp - a.timestamp));
+          
+          // Check for new badges triggered by the new level
+          if (levelUp) {
+               // We need to use the *new* level for checking badges
+               checkAllBadges(progress, meebots.length, newLevel);
+               speak(`Level Up! You have reached Mining Level ${newLevel}.`, 'energetic');
+          } else {
+               // 10% chance to speak a mining phrase
+               if (Math.random() > 0.9) {
+                   speak("Mining sequence complete. Points accrued.", "stoic");
+               }
+          }
+
+          // --- NEW: SYNC TO LEADERBOARD ---
+          const activeBot = meebots[0];
+          if (activeBot) {
+             updateMinerScore(
+                '0xUser...Wallet', // Placeholder for user wallet
+                activeBot.name,
+                newPoints,
+                newLevel,
+                activeBot.image
+             );
+          }
+
+          return {
+              points: newPoints,
+              level: newLevel,
+              isMining: false,
+              lastMinedAt: now
+          };
+      });
+  }, [progress, meebots, checkAllBadges, miningState.isMining, miningState.lastMinedAt]);
+
 
   const dismissBadgeNotification = () => {
       setCurrentBadgeNotification(null);
   };
   
   return (
-    <MeeBotContext.Provider value={{ meebots, timeline, unlockedBadges, proposals, progress, userMissions, mintMeeBot, addProposalAnalysis, notifyPersonaCreated, migrateMeeBot, giftMeeBot, logChatMemory, currentBadgeNotification, dismissBadgeNotification }}>
+    <MeeBotContext.Provider value={{ meebots, timeline, unlockedBadges, proposals, progress, userMissions, miningState, mintMeeBot, addProposalAnalysis, notifyPersonaCreated, migrateMeeBot, giftMeeBot, logChatMemory, executeMining, currentBadgeNotification, dismissBadgeNotification }}>
       {children}
     </MeeBotContext.Provider>
   );

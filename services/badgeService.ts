@@ -1,4 +1,4 @@
-import { Award, Bot, FileText, Palette } from 'lucide-react';
+import { Award, Bot, FileText, Palette, Pickaxe, Gem, Trophy, Crown } from 'lucide-react';
 import type { Badge } from '../types';
 
 // Using Omit here to define the static part of the badge,
@@ -22,12 +22,38 @@ export const ALL_BADGES: Omit<Badge, 'unlockedAt'>[] = [
         description: 'Awarded for creating a new custom persona.',
         icon: Palette,
     },
+    // Mining Badges - These correspond to the NFT evolutions in the smart contract
+    {
+        id: 'miner-bronze',
+        name: 'Bronze Miner',
+        description: 'Reached Mining Level 1 (10 Points). A solid start.',
+        icon: Pickaxe,
+    },
+    {
+        id: 'miner-silver',
+        name: 'Silver Miner',
+        description: 'Reached Mining Level 5 (50 Points). Serious dedication.',
+        icon: Gem,
+    },
+    {
+        id: 'miner-gold',
+        name: 'Gold Miner',
+        description: 'Reached Mining Level 10 (100 Points). A master of the craft.',
+        icon: Trophy,
+    },
+    {
+        id: 'miner-legend',
+        name: 'Legend Miner',
+        description: 'Reached Mining Level 20. One of the ancients.',
+        icon: Crown,
+    },
 ];
 
 export type Progress = {
     meebotCount: number;
     proposalsAnalyzed: number;
     personasCreated: number;
+    miningLevel: number; // Added for mining checks
 }
 
 /**
@@ -55,6 +81,20 @@ export function checkNewBadges(progress: Progress, existingBadgeIds: Set<string>
     // Persona Architect
     if (progress.personasCreated >= 1 && !existingBadgeIds.has('persona-architect')) {
         newlyUnlocked.push({ ...findBadge('persona-architect'), unlockedAt: now });
+    }
+
+    // Mining Milestones
+    if (progress.miningLevel >= 1 && !existingBadgeIds.has('miner-bronze')) {
+        newlyUnlocked.push({ ...findBadge('miner-bronze'), unlockedAt: now });
+    }
+    if (progress.miningLevel >= 5 && !existingBadgeIds.has('miner-silver')) {
+        newlyUnlocked.push({ ...findBadge('miner-silver'), unlockedAt: now });
+    }
+    if (progress.miningLevel >= 10 && !existingBadgeIds.has('miner-gold')) {
+        newlyUnlocked.push({ ...findBadge('miner-gold'), unlockedAt: now });
+    }
+    if (progress.miningLevel >= 20 && !existingBadgeIds.has('miner-legend')) {
+        newlyUnlocked.push({ ...findBadge('miner-legend'), unlockedAt: now });
     }
 
     return newlyUnlocked;

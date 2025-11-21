@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { LayoutDashboard, Sparkles, Settings, FileText, Palette, ArrowRightLeft, Target, Gift, MessageSquare, Landmark } from 'lucide-react';
+import { LayoutDashboard, Sparkles, Settings, FileText, Palette, ArrowRightLeft, Target, Gift, MessageSquare, Landmark, Pickaxe, Shield } from 'lucide-react';
 import type { NavigationItem } from '../types';
 import { BrandLogo } from './BrandLogo';
 
@@ -37,12 +38,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPath, navigate, isOpen 
   const navigationItems = React.useMemo<NavigationItem[]>(() => [
     { path: '/', title: 'Dashboard', icon: LayoutDashboard },
     { path: '/genesis', title: 'MeeBot Genesis', icon: Sparkles },
+    { path: '/mining', title: 'Mining Farm', icon: Pickaxe },
     { path: '/chat', title: 'MeeBot Chat', icon: MessageSquare },
     { path: '/governance', title: 'Governance', icon: Landmark },
     { path: '/gifting', title: 'Gifting Center', icon: Gift },
     { path: '/migration', title: 'Migration', icon: ArrowRightLeft },
     { path: '/missions', title: 'Missions', icon: Target },
     { path: '/analysis', title: 'Proposal Analysis', icon: FileText },
+    { path: '/transparency', title: 'Transparency', icon: Shield },
     { path: '/origins', title: 'Hall of Origins', icon: Sparkles },
     { path: '/personas', title: 'Personas', icon: Palette },
     { path: '/settings', title: 'Settings', icon: Settings },

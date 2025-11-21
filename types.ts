@@ -59,7 +59,7 @@ export type UserMission = {
 
 
 export type MemoryEvent = {
-  type: "Mint" | "MiningGift" | "Badge" | "Proposal" | "EmotionShift" | "Migration" | "Mission" | "Gift" | "Chat";
+  type: "Mint" | "MiningGift" | "Badge" | "Proposal" | "EmotionShift" | "Migration" | "Mission" | "Gift" | "Chat" | "Mining";
   message: string;
   timestamp: number;
   // Fields to support multi-chain finality simulation
@@ -125,4 +125,21 @@ export type OnChainProposal = {
   chainName: string;
   txHash: string;
   relatedMeeBotIds: string[];
+};
+
+export type MiningState = {
+  points: number;
+  level: number;
+  isMining: boolean;
+  lastMinedAt: number;
+};
+
+export type LeaderboardEntry = {
+  rank: number;
+  minerAddress: string; // e.g. "0x123...abc"
+  minerName: string;    // e.g. "MeeBot #999"
+  level: number;
+  points: number;
+  avatar?: string;      // image url
+  isUser?: boolean;     // Flag to highlight the current user
 };
