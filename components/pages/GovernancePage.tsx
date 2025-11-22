@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Landmark, PlusCircle, LoaderCircle, CheckCircle, XCircle, ThumbsUp, ThumbsDown, Hammer, BrainCircuit, HardHat, Server, X, BarChart2, ExternalLink } from 'lucide-react';
 import { fetchAllProposals, UnifiedProposal } from '../../services/unifiedProposalService';
 import * as onChainService from '../../services/onChainProposalService';
+import { Skeleton } from '../Skeleton';
 
 type ChainFilter = 'All' | 'Sepolia' | 'Fuse' | 'BNB';
 type OnChainNetwork = 'Sepolia' | 'Fuse' | 'BNB';
@@ -101,13 +102,13 @@ const OffChainProposalCard: React.FC<{ proposal: Extract<UnifiedProposal, { sour
     };
     
     return (
-        <div className="bg-meebot-surface border border-meebot-border rounded-lg p-4 animate-fade-in">
+        <div className="bg-meebot-surface border border-meebot-border rounded-lg p-4 animate-fade-in h-full flex flex-col">
             <div className="flex justify-between items-start mb-2">
-                <h3 className="font-bold text-white pr-4">{proposal.title}</h3>
-                <span className={`text-xs font-semibold px-2 py-1 rounded-full capitalize ${statusStyles[proposal.status]}`}>{proposal.status}</span>
+                <h3 className="font-bold text-white pr-4 line-clamp-2">{proposal.title}</h3>
+                <span className={`text-xs font-semibold px-2 py-1 rounded-full capitalize shrink-0 ${statusStyles[proposal.status]}`}>{proposal.status}</span>
             </div>
-            <p className="text-sm text-meebot-text-secondary mb-3">{proposal.description}</p>
-            <div className="text-xs text-meebot-text-secondary/80 flex justify-between items-center pt-2 border-t border-meebot-border/50">
+            <p className="text-sm text-meebot-text-secondary mb-3 line-clamp-3 flex-grow">{proposal.description}</p>
+            <div className="text-xs text-meebot-text-secondary/80 flex justify-between items-center pt-2 border-t border-meebot-border/50 mt-auto">
                 <span>{new Date(proposal.createdAt).toLocaleString()}</span>
                 <div className="flex items-center gap-2 px-2 py-1 rounded-full bg-meebot-bg border border-meebot-border">
                     <BrainCircuit className="w-3 h-3 text-meebot-accent"/>
@@ -127,13 +128,13 @@ const OnChainProposalCard: React.FC<{
     const canExecute = proposal.voteYes > proposal.voteNo && !proposal.executed;
     
     return (
-         <div className="bg-meebot-surface border border-meebot-border rounded-lg p-4 animate-fade-in relative overflow-hidden">
-            {isProcessing(proposal.id) && <div className="absolute inset-0 bg-meebot-surface/80 flex items-center justify-center"><LoaderCircle className="w-6 h-6 animate-spin text-meebot-primary"/></div>}
+         <div className="bg-meebot-surface border border-meebot-border rounded-lg p-4 animate-fade-in relative overflow-hidden h-full flex flex-col">
+            {isProcessing(proposal.id) && <div className="absolute inset-0 bg-meebot-surface/80 flex items-center justify-center z-10"><LoaderCircle className="w-6 h-6 animate-spin text-meebot-primary"/></div>}
             <div className="flex justify-between items-start mb-2">
-                <h3 className="font-bold text-white pr-4">{proposal.title}</h3>
-                <span className={`text-xs font-bold px-2 py-1 rounded-full border ${getChainTagStyle(proposal.chainName)}`}>{proposal.chainName}</span>
+                <h3 className="font-bold text-white pr-4 line-clamp-2">{proposal.title}</h3>
+                <span className={`text-xs font-bold px-2 py-1 rounded-full border shrink-0 ${getChainTagStyle(proposal.chainName)}`}>{proposal.chainName}</span>
             </div>
-            <p className="text-sm text-meebot-text-secondary mb-3">{proposal.description}</p>
+            <p className="text-sm text-meebot-text-secondary mb-3 line-clamp-3 flex-grow">{proposal.description}</p>
             
              <div className="grid grid-cols-2 gap-2 mb-3 text-center">
                 <div className="bg-meebot-bg p-2 rounded-md">
@@ -146,7 +147,7 @@ const OnChainProposalCard: React.FC<{
                 </div>
             </div>
             
-            <div className="flex gap-2 mb-3">
+            <div className="flex gap-2 mb-3 mt-auto">
                 <button
                     onClick={() => onVote(proposal.id, true)}
                     disabled={proposal.executed || isProcessing(proposal.id)}
@@ -166,13 +167,13 @@ const OnChainProposalCard: React.FC<{
                  <button
                     onClick={() => onExecute(proposal.id)}
                     disabled={isProcessing(proposal.id)}
-                    className="w-full flex items-center justify-center gap-2 p-2 rounded-md bg-meebot-primary/20 text-meebot-primary hover:bg-meebot-primary/30 disabled:opacity-50 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 p-2 rounded-md bg-meebot-primary/20 text-meebot-primary hover:bg-meebot-primary/30 disabled:opacity-50 transition-colors mb-3"
                  >
                     <Hammer className="w-4 h-4" /> Execute Proposal
                  </button>
             )}
 
-            <div className="text-xs text-meebot-text-secondary/80 flex justify-between items-center pt-2 mt-3 border-t border-meebot-border/50">
+            <div className="text-xs text-meebot-text-secondary/80 flex justify-between items-center pt-2 border-t border-meebot-border/50">
                 <span>{new Date(proposal.createdAt).toLocaleString()}</span>
                 <a href={getExplorerLink(proposal).url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-meebot-primary transition-colors">
                     View on {getExplorerLink(proposal).name} <ExternalLink className="w-3 h-3"/>
@@ -241,20 +242,62 @@ const GovernanceStats: React.FC<{proposals: UnifiedProposal[]}> = ({ proposals }
     )
 }
 
+// --- Skeletons ---
+
+const ProposalSkeleton = () => (
+  <div className="bg-meebot-surface border border-meebot-border rounded-lg p-4 h-full">
+    <div className="flex justify-between items-start mb-4">
+      <Skeleton className="h-6 w-3/4" />
+      <Skeleton className="h-5 w-16 rounded-full" />
+    </div>
+    <Skeleton className="h-4 w-full mb-2" />
+    <Skeleton className="h-4 w-5/6 mb-6" />
+    <div className="grid grid-cols-2 gap-2 mb-4 mt-auto">
+         <Skeleton className="h-12 rounded-md" />
+         <Skeleton className="h-12 rounded-md" />
+    </div>
+    <div className="flex gap-2 mb-4">
+        <Skeleton className="h-9 w-full rounded-md" />
+        <Skeleton className="h-9 w-full rounded-md" />
+    </div>
+    <div className="pt-2 mt-2 border-t border-meebot-border/50 flex justify-between">
+         <Skeleton className="h-3 w-1/3" />
+         <Skeleton className="h-3 w-1/4" />
+    </div>
+  </div>
+);
+
+const StatsSkeleton = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="p-4 bg-meebot-surface border border-meebot-border rounded-lg col-span-1 md:col-span-2 lg:col-span-1">
+            <Skeleton className="h-4 w-1/2 mb-2" />
+            <Skeleton className="h-8 w-1/3 mb-2" />
+            <Skeleton className="h-3 w-3/4" />
+        </div>
+        <div className="p-4 bg-meebot-surface border border-meebot-border rounded-lg col-span-1 md:col-span-2 lg:col-span-3">
+             <Skeleton className="h-4 w-1/4 mb-4" />
+             <div className="flex gap-4 h-24 items-end">
+                 {Array.from({length: 3}).map((_, i) => <Skeleton key={i} className="w-full rounded-t-sm h-1/2" />)}
+             </div>
+        </div>
+    </div>
+);
+
+
 export const GovernancePage: React.FC = () => {
     const [proposals, setProposals] = useState<UnifiedProposal[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
     const [chainFilter, setChainFilter] = useState<ChainFilter>('All');
+    const [isLoading, setIsLoading] = useState(true);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     const loadProposals = useCallback(async () => {
         setIsLoading(true);
         try {
             const data = await fetchAllProposals(chainFilter);
             setProposals(data);
-        } catch (e) {
-            console.error("Failed to load proposals", e);
+        } catch (error) {
+            console.error("Failed to load proposals:", error);
         } finally {
             setIsLoading(false);
         }
@@ -264,89 +307,102 @@ export const GovernancePage: React.FC = () => {
         loadProposals();
     }, [loadProposals]);
 
-    const handleAction = async (proposalId: string, action: () => Promise<any>) => {
-        setProcessingIds(prev => new Set(prev).add(proposalId));
+    const handleVote = async (id: string, support: boolean) => {
+        setProcessingIds(prev => new Set(prev).add(id));
         try {
-            await action();
+            await onChainService.voteOnProposal(id, support);
             await loadProposals(); // Refresh data
         } catch (e) {
-            console.error("Action failed", e);
             alert((e as Error).message);
         } finally {
             setProcessingIds(prev => {
                 const newSet = new Set(prev);
-                newSet.delete(proposalId);
+                newSet.delete(id);
+                return newSet;
+            });
+        }
+    };
+
+    const handleExecute = async (id: string) => {
+        setProcessingIds(prev => new Set(prev).add(id));
+        try {
+            await onChainService.executeProposal(id);
+            await loadProposals(); // Refresh data
+        } catch (e) {
+             alert((e as Error).message);
+        } finally {
+             setProcessingIds(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(id);
                 return newSet;
             });
         }
     };
     
-    const handleVote = (id: string, support: boolean) => handleAction(id, () => onChainService.voteOnProposal(id, support));
-    const handleExecute = (id: string) => handleAction(id, () => onChainService.executeProposal(id));
-    
-    const handleCreateSuccess = () => {
-        setIsCreateModalOpen(false);
-        loadProposals();
-    };
-
-
     const filterOptions: ChainFilter[] = ['All', 'Sepolia', 'Fuse', 'BNB'];
-    
+
     return (
-        <div className="p-4 md:p-8">
-            {isCreateModalOpen && <CreateProposalModal onClose={() => setIsCreateModalOpen(false)} onSuccess={handleCreateSuccess} />}
-            <div className="flex justify-between items-center mb-8">
+        <div className="p-4 md:p-8 animate-fade-in">
+            {isModalOpen && <CreateProposalModal onClose={() => setIsModalOpen(false)} onSuccess={() => { setIsModalOpen(false); loadProposals(); }} />}
+            
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                 <div className="flex items-center">
-                    <Landmark className="w-10 h-10 text-meebot-primary mr-4" />
+                    <Landmark className="w-10 h-10 text-meebot-accent mr-4" />
                     <div>
-                        <h1 className="text-4xl font-bold text-white">Multi-Chain Governance</h1>
+                        <h1 className="text-4xl font-bold text-white">Governance Hub</h1>
                         <p className="text-meebot-text-secondary mt-1">
-                            An aggregated view of governance across all networks.
+                            Decentralized decision making for the MeeChain ecosystem.
                         </p>
                     </div>
                 </div>
-            </div>
-            
-            {!isLoading && <GovernanceStats proposals={proposals} />}
-            
-            <div className="flex justify-between items-center mb-8">
-                <div className="flex items-center gap-2">
-                    {filterOptions.map(option => {
-                        const isActive = chainFilter === option;
-                        return (
-                            <button
-                                key={option}
-                                onClick={() => setChainFilter(option)}
-                                className={`px-4 py-2 text-sm font-semibold rounded-full transition-colors ${
-                                    isActive 
-                                    ? 'bg-meebot-primary text-meebot-bg' 
-                                    : 'bg-meebot-surface text-meebot-text-secondary hover:bg-meebot-border hover:text-meebot-text-primary'
-                                }`}
-                            >
-                                {option}
-                            </button>
-                        )
-                    })}
-                </div>
-                 <button onClick={() => setIsCreateModalOpen(true)} className="flex items-center px-4 py-2 font-semibold text-white transition-colors bg-meebot-primary rounded-lg hover:bg-opacity-80">
+                 <button onClick={() => setIsModalOpen(true)} className="flex items-center px-6 py-3 font-semibold text-white transition-colors bg-meebot-primary rounded-lg hover:bg-opacity-80 shadow-lg">
                     <PlusCircle className="w-5 h-5 mr-2" />
-                    Create Proposal
+                    New Proposal
                 </button>
             </div>
 
+            {isLoading ? <StatsSkeleton /> : <GovernanceStats proposals={proposals} />}
+
+            <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
+                {filterOptions.map(option => (
+                     <button
+                        key={option}
+                        onClick={() => setChainFilter(option)}
+                        className={`px-4 py-2 text-sm font-semibold rounded-full transition-colors whitespace-nowrap ${
+                            chainFilter === option 
+                            ? 'bg-meebot-primary text-meebot-bg' 
+                            : 'bg-meebot-surface text-meebot-text-secondary hover:bg-meebot-border hover:text-meebot-text-primary'
+                        }`}
+                    >
+                        {option}
+                    </button>
+                ))}
+            </div>
 
             {isLoading ? (
-                <div className="flex justify-center items-center h-64"><LoaderCircle className="w-8 h-8 animate-spin text-meebot-primary"/></div>
-            ) : proposals.length === 0 ? (
-                <div className="text-center text-meebot-text-secondary py-16">No proposals found for this filter.</div>
-            ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {proposals.map(p => {
-                        if (p.source === 'onchain') {
-                            return <OnChainProposalCard key={p.id} proposal={p} onVote={handleVote} onExecute={handleExecute} isProcessing={id => processingIds.has(id)} />;
-                        }
-                        return <OffChainProposalCard key={p.id} proposal={p} />;
-                    })}
+                     {Array.from({ length: 6 }).map((_, i) => <ProposalSkeleton key={i} />)}
+                </div>
+            ) : proposals.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {proposals.map(proposal => (
+                        <div key={proposal.id} className="h-full">
+                            {proposal.source === 'onchain' ? (
+                                <OnChainProposalCard 
+                                    proposal={proposal} 
+                                    onVote={handleVote} 
+                                    onExecute={handleExecute}
+                                    isProcessing={(id) => processingIds.has(id)}
+                                />
+                            ) : (
+                                <OffChainProposalCard proposal={proposal} />
+                            )}
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="text-center py-12 bg-meebot-surface border border-dashed border-meebot-border rounded-lg text-meebot-text-secondary">
+                    <p>No proposals found for this filter.</p>
                 </div>
             )}
         </div>

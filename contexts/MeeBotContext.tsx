@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
 import type { MeeBotMetadata, MemoryEvent, Badge, Proposal, UserMission, MiningState } from '../types';
 import { mockMeeBots } from '../data/mockMeeBots';
-import { activateMiningGift, logMintEvent, logMiningGiftEvent, updateMinerScore } from '../services/miningService';
+import { activateMiningGift, logMintEvent, logMiningGiftEvent, updateMinerScore, subscribeToMiner } from '../services/miningService';
 import { ALL_BADGES, checkNewBadges } from '../services/badgeService';
 import { speak } from '../services/ttsService';
 import { ALL_MISSIONS, shouldResetMission } from '../services/missionService';
@@ -28,6 +28,10 @@ const CHAINS = [
 const CHAINS_MAP = new Map(CHAINS.map(c => [c.name, c]));
 
 const getRandomChain = () => CHAINS[Math.floor(Math.random() * CHAINS.length)];
+
+// Constant for the current user's wallet address simulation
+// Exporting it so it can be used in the UI components for consistent ID matching
+export const USER_WALLET_ADDRESS = "0xUser...Wallet";
 
 interface MeeBotContextType {
   meebots: MeeBotMetadata[];
@@ -106,6 +110,27 @@ export const MeeBotProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [userMissions, setUserMissions] = useState<UserMission[]>(() => loadFromStorage(MEEBOT_MISSIONS_KEY, []));
   const [miningState, setMiningState] = useState<MiningState>(() => loadFromStorage(MEEBOT_MINING_KEY, { points: 0, level: 0, isMining: false, lastMinedAt: 0 }));
   const [currentBadgeNotification, setCurrentBadgeNotification] = useState<Badge | null>(null);
+
+  // --- Real-time Mining State Sync ---
+  useEffect(() => {
+    const unsubscribe = subscribeToMiner(USER_WALLET_ADDRESS, (remoteData) => {
+        if (remoteData) {
+            setMiningState(prev => {
+                // Only update if the remote state is actually different/newer to avoid jitter
+                // Here we assume remote serves as the source of truth for points/level
+                if (remoteData.points !== prev.points || remoteData.level !== prev.level) {
+                    return {
+                        ...prev,
+                        points: remoteData.points,
+                        level: remoteData.level
+                    };
+                }
+                return prev;
+            });
+        }
+    });
+    return () => unsubscribe();
+  }, []);
 
   // --- Effects to sync state with localStorage ---
   useEffect(() => { window.localStorage.setItem(MEEBOT_BOTS_KEY, JSON.stringify(meebots)); }, [meebots]);
@@ -441,11 +466,11 @@ export const MeeBotProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                }
           }
 
-          // --- NEW: SYNC TO LEADERBOARD ---
+          // --- SYNC TO LEADERBOARD (Mock/Optimistic) ---
           const activeBot = meebots[0];
           if (activeBot) {
              updateMinerScore(
-                '0xUser...Wallet', // Placeholder for user wallet
+                USER_WALLET_ADDRESS,
                 activeBot.name,
                 newPoints,
                 newLevel,

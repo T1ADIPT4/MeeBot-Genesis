@@ -1,30 +1,53 @@
 
 import React, { useState, useEffect } from 'react';
-import { Pickaxe, Zap, Lock, CheckCircle, LoaderCircle, Gem, Trophy, Crown, Server, Activity, Box, Bot, RefreshCw, Radio, Wallet, Terminal, Shield, ChevronRight } from 'lucide-react';
-import { useMeeBots } from '../../contexts/MeeBotContext';
+import { Pickaxe, Zap, Lock, CheckCircle, LoaderCircle, Gem, Trophy, Crown, Server, Activity, Box, Bot, Radio, Wallet, Binary, Hash, Cpu, Shield, ChevronRight, Star } from 'lucide-react';
+import { useMeeBots, USER_WALLET_ADDRESS } from '../../contexts/MeeBotContext';
 import { subscribeToLeaderboard } from '../../services/miningService';
 import type { LeaderboardEntry } from '../../types';
+import { Skeleton } from '../Skeleton';
 
 const POINTS_PER_LEVEL = 10;
 
-// --- Confetti Component ---
+// --- Confetti & Celebration Component ---
 const CONFETTI_COUNT = 100;
 const COLORS = ['#00CFE8', '#FF1B93', '#FFD700', '#FFFFFF'];
 
-const Confetti: React.FC = () => {
+const CelebrationOverlay: React.FC<{ level: number, onComplete: () => void }> = ({ level, onComplete }) => {
+    useEffect(() => {
+        const timer = setTimeout(onComplete, 5000);
+        return () => clearTimeout(timer);
+    }, [onComplete]);
+
     return (
-        <div className="fixed inset-0 z-50 pointer-events-none overflow-hidden" aria-hidden="true">
-            {Array.from({ length: CONFETTI_COUNT }).map((_, i) => {
-                const style = {
-                    left: `${Math.random() * 100}vw`,
-                    backgroundColor: COLORS[Math.floor(Math.random() * COLORS.length)],
-                    animation: `confetti-fall ${Math.random() * 3 + 2}s ${Math.random() * 2}s linear forwards`,
-                    width: `${Math.floor(Math.random() * 10) + 8}px`,
-                    height: `${Math.floor(Math.random() * 6) + 5}px`,
-                    opacity: Math.random() + 0.5,
-                };
-                return <div key={i} className="absolute top-[-10vh] rounded-sm" style={style} />;
-            })}
+        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+            {/* Confetti */}
+            <div className="absolute inset-0 overflow-hidden">
+                {Array.from({ length: CONFETTI_COUNT }).map((_, i) => {
+                    const style = {
+                        left: `${Math.random() * 100}vw`,
+                        backgroundColor: COLORS[Math.floor(Math.random() * COLORS.length)],
+                        animation: `confetti-fall ${Math.random() * 3 + 2}s ${Math.random() * 2}s linear forwards`,
+                        width: `${Math.floor(Math.random() * 10) + 8}px`,
+                        height: `${Math.floor(Math.random() * 6) + 5}px`,
+                        opacity: Math.random() + 0.5,
+                    };
+                    return <div key={i} className="absolute top-[-10vh] rounded-sm" style={style} />;
+                })}
+            </div>
+
+            {/* Level Up Text Animation */}
+            <div className="relative z-50 flex flex-col items-center animate-bounce">
+                <div className="relative">
+                    <Star className="w-32 h-32 text-yellow-400 fill-yellow-400 animate-[spin_3s_linear_infinite] opacity-50 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 scale-150 blur-xl" />
+                    <Trophy className="w-32 h-32 text-yellow-400 fill-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.8)]" />
+                </div>
+                <h1 className="text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 to-yellow-600 drop-shadow-[0_4px_0_rgba(0,0,0,0.5)] stroke-white tracking-wider transform -rotate-6 mt-4">
+                    LEVEL UP!
+                </h1>
+                <div className="mt-4 bg-black/80 backdrop-blur-md px-8 py-4 rounded-full border-2 border-yellow-400 shadow-[0_0_30px_rgba(250,204,21,0.5)]">
+                    <p className="text-2xl font-bold text-white">You reached Level {level}</p>
+                </div>
+            </div>
         </div>
     );
 };
@@ -161,35 +184,32 @@ const NFTBadgeCard: React.FC<{
     );
 };
 
-const getMiningPhrases = (persona: string) => {
-    const lower = persona.toLowerCase();
-    if (lower.includes('guardian') || lower.includes('protect')) return ["Shielding the network...", "Verifying block integrity...", "Perimeter secure, mining...", "Defense protocols active."];
-    if (lower.includes('creative') || lower.includes('art')) return ["Designing a new hash...", "Sculpting the blockchain...", "Finding patterns in the noise...", "Art in every block."];
-    if (lower.includes('energetic') || lower.includes('speed')) return ["Turbo mining engaged!", "Speed of light!", "Zooming through blocks!", "Catching hashes!"];
-    if (lower.includes('data') || lower.includes('wizard')) return ["Analyzing hash probability...", "Optimizing yield...", "Calculating nonces...", "Data stream synced."];
-    if (lower.includes('nature') || lower.includes('eco')) return ["Growing the chain...", "Harvesting rewards...", "Digital roots extending...", "Natural consensus."];
-    return ["Let's find that block!", "Crunching the numbers...", "Securing the network...", "Almost there...", "Did you see that hash?", "Mining in progress..."];
-}
-
 const ActiveMinerDisplay: React.FC<{ activeBot: any, isMining: boolean }> = ({ activeBot, isMining }) => {
-    const [speechBubbleText, setSpeechBubbleText] = useState<string | null>(null);
+    const [speech, setSpeech] = useState<string | null>(null);
 
+    // Cycle through speech phrases when mining
     useEffect(() => {
+        let interval: ReturnType<typeof setInterval>;
         if (isMining && activeBot) {
-            const phrases = getMiningPhrases(activeBot.persona);
+            const phrases = [
+                "Scanning for nonces...",
+                "Validating transaction...",
+                "Syncing with Sepolia...",
+                "Optimizing hash rate...",
+                "Finding the next block...",
+                "Calculating proof...",
+                "Verifying signature..."
+            ];
+            // Initial phrase
+            setSpeech(phrases[Math.floor(Math.random() * phrases.length)]);
             
-            // Initial message
-            setSpeechBubbleText(phrases[0]);
-
-            const interval = setInterval(() => {
-                const randomMsg = phrases[Math.floor(Math.random() * phrases.length)];
-                setSpeechBubbleText(randomMsg);
-            }, 2000);
-
-            return () => clearInterval(interval);
+            interval = setInterval(() => {
+                 setSpeech(phrases[Math.floor(Math.random() * phrases.length)]);
+            }, 3000);
         } else {
-            setSpeechBubbleText(null);
+            setSpeech(null);
         }
+        return () => clearInterval(interval);
     }, [isMining, activeBot]);
 
     if (!activeBot) {
@@ -203,39 +223,65 @@ const ActiveMinerDisplay: React.FC<{ activeBot: any, isMining: boolean }> = ({ a
     }
     
     return (
-        <div className="relative flex items-center gap-4 p-4 bg-meebot-bg/50 rounded-lg border border-meebot-border overflow-visible mt-6">
+        <div className={`relative flex items-center gap-4 p-4 bg-meebot-bg/50 rounded-lg border overflow-visible mt-8 min-h-[100px] transition-colors duration-500 ${isMining ? 'border-meebot-primary/50' : 'border-meebot-border'}`}>
+             
              {/* Speech Bubble */}
-             {speechBubbleText && (
-                 <div className="absolute -top-10 left-8 bg-white text-meebot-bg px-3 py-1.5 rounded-t-lg rounded-br-lg text-xs font-bold shadow-lg animate-fade-in z-20 whitespace-nowrap">
-                     {speechBubbleText}
-                     <div className="absolute -bottom-1 left-0 w-3 h-3 bg-white transform skew-x-12"></div>
+             {isMining && speech && (
+                 <div className="absolute -top-8 left-8 z-20 animate-fade-in">
+                    <div className="bg-white text-meebot-bg text-xs font-bold px-3 py-1.5 rounded-t-lg rounded-br-lg shadow-lg relative border-2 border-meebot-primary whitespace-nowrap">
+                        {speech}
+                        <div className="absolute bottom-0 left-0 translate-y-full border-8 border-transparent border-l-meebot-primary border-t-meebot-primary w-0 h-0"></div>
+                         <div className="absolute bottom-0 left-[2px] translate-y-[calc(100%-3px)] border-[6px] border-transparent border-l-white border-t-white w-0 h-0"></div>
+                    </div>
                  </div>
              )}
 
-             <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-meebot-primary shadow-[0_0_10px_rgba(0,207,232,0.3)] shrink-0 z-10 bg-meebot-bg">
+             {/* Avatar with pulse */}
+             <div className={`relative w-16 h-16 rounded-full overflow-hidden border-2 transition-all duration-300 shrink-0 z-10 bg-meebot-bg ${isMining ? 'border-meebot-primary shadow-[0_0_20px_rgba(0,207,232,0.6)] scale-105' : 'border-meebot-border'}`}>
                 <img src={activeBot.image} alt={activeBot.name} className="w-full h-full object-cover" />
+                {isMining && <div className="absolute inset-0 bg-meebot-primary/20 animate-pulse"></div>}
              </div>
+
              <div className="z-10 min-w-0 flex-grow">
-                <div className="flex justify-between items-start">
-                    <div>
+                <div className="flex flex-col justify-center h-full">
+                    <div className="flex items-baseline gap-2">
                         <p className="text-xs text-meebot-text-secondary uppercase tracking-wide">Operator</p>
-                        <p className="font-bold text-white truncate">{activeBot.name}</p>
-                        <p className="text-xs text-meebot-accent truncate">{activeBot.persona}</p>
+                        <p className="font-bold text-white truncate text-lg">{activeBot.name}</p>
+                    </div>
+                    
+                    {/* Visual Status / Result Symbols */}
+                    <div className="h-6 flex items-center relative mt-1">
+                        {isMining ? (
+                            <div className="flex items-center gap-3">
+                                <span className="text-xs font-mono text-meebot-primary animate-pulse">HASHING...</span>
+                                {/* Flickering / Bouncing Icons representing results/work */}
+                                <div className="flex space-x-1">
+                                    <Binary className="w-3 h-3 text-meebot-accent animate-bounce" style={{ animationDelay: '0ms', opacity: 0.8 }}/>
+                                    <Hash className="w-3 h-3 text-green-400 animate-bounce" style={{ animationDelay: '150ms', opacity: 0.8 }}/>
+                                    <Cpu className="w-3 h-3 text-yellow-400 animate-bounce" style={{ animationDelay: '300ms', opacity: 0.8 }}/>
+                                </div>
+                            </div>
+                        ) : (
+                             <p className="text-xs text-meebot-accent truncate">{activeBot.persona}</p>
+                        )}
                     </div>
                 </div>
              </div>
              
+             {/* Right Side Status Pill */}
              <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10">
-                 <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold transition-colors ${isMining ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'}`}>
-                    <div className={`w-2 h-2 rounded-full animate-pulse ${isMining ? 'bg-yellow-400' : 'bg-green-400'}`}></div>
-                    {isMining ? 'MINING' : 'READY'}
+                 <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-500 ${isMining ? 'bg-meebot-primary/20 text-meebot-primary border border-meebot-primary/50 shadow-[0_0_10px_rgba(0,207,232,0.2)]' : 'bg-meebot-surface text-meebot-text-secondary border border-meebot-border'}`}>
+                    <div className={`w-2 h-2 rounded-full ${isMining ? 'bg-meebot-primary animate-ping' : 'bg-meebot-text-secondary'}`}></div>
+                    <div className={`w-2 h-2 rounded-full absolute ${isMining ? 'bg-meebot-primary' : 'bg-meebot-text-secondary'}`}></div>
+                    <span className="ml-3">{isMining ? 'ACTIVE' : 'IDLE'}</span>
                  </div>
              </div>
 
-            {/* Matrix background effect when mining */}
+            {/* Background Pulse Effect - Enhanced for "Subtle Energy Pulse" */}
             {isMining && (
-                <div className="absolute inset-0 opacity-10 pointer-events-none">
-                    <div className="absolute inset-0 bg-meebot-primary/20"></div>
+                <div className="absolute inset-0 overflow-hidden rounded-lg pointer-events-none">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-meebot-primary/10 to-transparent animate-[pulse_2s_ease-in-out_infinite]"></div>
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-meebot-primary/20 blur-[40px] animate-pulse rounded-full translate-x-1/2 -translate-y-1/2"></div>
                 </div>
             )}
         </div>
@@ -249,10 +295,11 @@ const LeaderboardTable: React.FC<{ userPoints: number, userLevel: number, active
     // Subscribe to the "Live" leaderboard (Simulates Firestore onSnapshot)
     useEffect(() => {
         setLoading(true);
+        // Pass USER_WALLET_ADDRESS to properly identify and highlight the current user in the returned entries
         const unsubscribe = subscribeToLeaderboard((data) => {
             setEntries(data);
             setLoading(false);
-        });
+        }, USER_WALLET_ADDRESS);
         return () => unsubscribe();
     }, []);
 
@@ -302,8 +349,21 @@ const LeaderboardTable: React.FC<{ userPoints: number, userLevel: number, active
                  {/* List */}
                  <div className="overflow-y-auto space-y-2 pr-1 flex-grow custom-scrollbar">
                     {loading ? (
-                        <div className="flex justify-center items-center py-8 text-meebot-text-secondary">
-                            <LoaderCircle className="w-6 h-6 animate-spin mr-2"/> Syncing Ledger...
+                         <div className="space-y-2">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                                <div key={i} className="grid grid-cols-12 items-center p-2 rounded-lg border border-transparent bg-meebot-bg/40">
+                                    <div className="col-span-2 flex justify-center"><Skeleton className="w-6 h-6 rounded-full" /></div>
+                                    <div className="col-span-6 flex items-center gap-3">
+                                        <Skeleton className="w-8 h-8 rounded-full" />
+                                        <div className="flex flex-col gap-1 w-full">
+                                            <Skeleton className="h-3 w-1/2" />
+                                            <Skeleton className="h-2 w-1/3" />
+                                        </div>
+                                    </div>
+                                    <div className="col-span-2 flex justify-center"><Skeleton className="h-4 w-8" /></div>
+                                    <div className="col-span-2 flex justify-end"><Skeleton className="h-4 w-12" /></div>
+                                </div>
+                            ))}
                         </div>
                     ) : (
                         entries.map((entry) => (
@@ -330,7 +390,7 @@ const LeaderboardTable: React.FC<{ userPoints: number, userLevel: number, active
                  </div>
 
                  {/* Current User Row (Only show if not already in the top list) */}
-                 {!userInTopList && activeBot && (
+                 {!userInTopList && activeBot && !loading && (
                      <div className="mt-4 pt-4 border-t border-meebot-border relative">
                         <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-meebot-surface px-2 text-[10px] text-meebot-text-secondary">YOUR RANK</div>
                         <div className="grid grid-cols-12 items-center p-2 rounded-lg bg-meebot-primary/10 border border-meebot-primary/30 shadow-[0_0_15px_rgba(0,207,232,0.15)]">
@@ -339,7 +399,7 @@ const LeaderboardTable: React.FC<{ userPoints: number, userLevel: number, active
                                 <img src={activeBot.image} alt="You" className="w-8 h-8 rounded-full bg-meebot-surface border border-meebot-primary" />
                                 <div className="flex flex-col min-w-0">
                                     <span className="font-bold text-sm text-white truncate">{activeBot.name}</span>
-                                    <span className="text-[10px] text-meebot-text-secondary font-mono truncate">0xUser...Wallet</span>
+                                    <span className="text-[10px] text-meebot-text-secondary font-mono truncate">{USER_WALLET_ADDRESS}</span>
                                 </div>
                             </div>
                             <div className="col-span-2 text-center">
@@ -360,16 +420,14 @@ const LeaderboardTable: React.FC<{ userPoints: number, userLevel: number, active
 export const MiningPage: React.FC = () => {
     const { miningState, executeMining, meebots } = useMeeBots();
     const { points, level, isMining } = miningState;
-    const [showConfetti, setShowConfetti] = useState(false);
+    const [showCelebration, setShowCelebration] = useState(false);
     const [prevLevel, setPrevLevel] = useState(level);
     const [isWalletConnected, setIsWalletConnected] = useState(false);
 
     useEffect(() => {
         if (level > prevLevel) {
-            setShowConfetti(true);
-            const timer = setTimeout(() => setShowConfetti(false), 5000);
+            setShowCelebration(true);
             setPrevLevel(level);
-            return () => clearTimeout(timer);
         }
     }, [level, prevLevel]);
 
@@ -382,8 +440,9 @@ export const MiningPage: React.FC = () => {
     }
 
     return (
-        <div className="p-4 md:p-8 animate-fade-in h-full flex flex-col overflow-y-auto">
-            {showConfetti && <Confetti />}
+        <div className="p-4 md:p-8 animate-fade-in h-full flex flex-col overflow-y-auto relative">
+            {showCelebration && <CelebrationOverlay level={level} onComplete={() => setShowCelebration(false)} />}
+            
             {/* Header */}
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 shrink-0 gap-4">
                 <div className="flex items-center">
@@ -409,8 +468,8 @@ export const MiningPage: React.FC = () => {
                         <span className="text-sm font-mono text-blue-400">Network: Sepolia</span>
                     </div>
                     <div className="flex items-center gap-2 px-4 py-2 bg-meebot-surface rounded-full border border-meebot-border">
-                        <Activity className="w-4 h-4 text-green-400 animate-pulse" />
-                        <span className="text-sm font-mono text-green-400">System Online</span>
+                        <Activity className="w-4 h-4 text-yellow-400 animate-pulse" />
+                        <span className="text-sm font-mono text-yellow-400">Simulated Network</span>
                     </div>
                 </div>
             </div>
@@ -419,14 +478,24 @@ export const MiningPage: React.FC = () => {
                 
                 {/* Left Column: The "Rig" Interface */}
                 <div className="lg:col-span-1 space-y-6">
-                    <div className="bg-meebot-surface border border-meebot-border rounded-xl p-1 shadow-2xl">
+                    <div className={`bg-meebot-surface border rounded-xl p-1 shadow-2xl transition-all duration-500 ${isMining ? 'border-meebot-primary/50 shadow-[0_0_30px_rgba(0,207,232,0.15)]' : 'border-meebot-border'}`}>
                         <div className="bg-meebot-bg rounded-lg p-6 flex flex-col items-center relative overflow-hidden">
                             {/* Decorative background elements */}
                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-meebot-primary to-transparent opacity-50"></div>
-                            <div className="absolute -top-10 -right-10 w-32 h-32 bg-meebot-primary/10 rounded-full blur-3xl"></div>
+                            <div className={`absolute -top-10 -right-10 w-32 h-32 bg-meebot-primary/10 rounded-full blur-3xl transition-opacity duration-500 ${isMining ? 'opacity-100' : 'opacity-50'}`}></div>
 
-                            <h2 className="text-xl font-bold text-white mb-6 z-10 flex items-center gap-2 self-start w-full">
-                                <Box className="w-5 h-5 text-meebot-accent" /> Node Status
+                            <h2 className="text-xl font-bold text-white mb-6 z-10 flex items-center justify-between w-full">
+                                <div className="flex items-center gap-2">
+                                    <Box className={`w-5 h-5 ${isMining ? 'text-meebot-primary animate-spin' : 'text-meebot-accent'}`} style={{ animationDuration: '3s' }} /> 
+                                    Node Status
+                                </div>
+                                {isMining && (
+                                    <div className="flex gap-1">
+                                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-[pulse_0.2s_ease-in-out_infinite]"></div>
+                                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-[pulse_0.5s_ease-in-out_infinite] delay-75"></div>
+                                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-[pulse_0.3s_ease-in-out_infinite] delay-150"></div>
+                                    </div>
+                                )}
                             </h2>
                             
                             <div className="w-full mb-6">
@@ -503,10 +572,13 @@ export const MiningPage: React.FC = () => {
                     {/* Evolution Rack */}
                     <div className="bg-meebot-bg border border-meebot-border rounded-xl p-6">
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-lg font-bold text-white flex items-center">
-                                <Gem className="w-5 h-5 text-meebot-accent mr-2" />
-                                Badge Evolution Rack
-                            </h3>
+                            <div>
+                                <h3 className="text-lg font-bold text-white flex items-center">
+                                    <Gem className="w-5 h-5 text-meebot-accent mr-2" />
+                                    Badge Evolution Rack
+                                </h3>
+                                <p className="text-xs text-meebot-text-secondary mt-1">Powered by MeeBadgeNFT (0xe7f1...0512)</p>
+                            </div>
                             <span className="text-xs bg-meebot-primary/20 text-meebot-primary px-2 py-1 rounded">
                                 ERC-1155 Compatible
                             </span>

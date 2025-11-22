@@ -5,6 +5,7 @@ import { speak } from '../../services/ttsService';
 import { Sparkles, BookOpen, Gift, Award, FileText, Heart, Hash, ArrowRightLeft, Bot, Target, MessageSquare, Volume2, X, Dna, Server, Clock, Fingerprint, FileJson, CheckCircle, XCircle, FileArchive, LoaderCircle, ThumbsUp, ThumbsDown, Hammer, BrainCircuit, ExternalLink } from 'lucide-react';
 import { fetchProposalsForMeeBot as fetchUnifiedProposals, UnifiedProposal } from '../../services/unifiedProposalService';
 import * as onChainService from '../../services/onChainProposalService';
+import { Skeleton } from '../Skeleton';
 
 export const TimelineIcon: React.FC<{ type: MemoryEvent['type'] }> = ({ type }) => {
     switch(type) {
@@ -155,10 +156,22 @@ const DNAViewer: React.FC<{ bot: MeeBotMetadata, onClose: () => void }> = ({ bot
                                 Related Governance Proposals
                             </h4>
                             {isLoadingProposals ? (
-                                <div className="flex items-center justify-center p-4 text-meebot-text-secondary">
-                                <LoaderCircle className="w-6 h-6 animate-spin mr-2"/>
-                                <span>Loading proposals...</span>
-                                </div>
+                                <ul className="space-y-3">
+                                    {Array.from({ length: 3 }).map((_, i) => (
+                                         <li key={i} className="p-3 bg-meebot-surface border border-meebot-border rounded-md">
+                                             <div className="flex justify-between mb-2">
+                                                 <Skeleton className="h-4 w-1/2" />
+                                                 <Skeleton className="h-4 w-16 rounded-full" />
+                                             </div>
+                                             <Skeleton className="h-3 w-full mb-1" />
+                                             <Skeleton className="h-3 w-3/4 mb-3" />
+                                             <div className="flex gap-2">
+                                                 <Skeleton className="h-8 w-full rounded" />
+                                                 <Skeleton className="h-8 w-full rounded" />
+                                             </div>
+                                         </li>
+                                    ))}
+                                </ul>
                             ) : relatedProposals.length === 0 ? (
                                 <p className="text-sm text-meebot-text-secondary text-center py-4">No proposals are directly related to this MeeBot.</p>
                             ) : (

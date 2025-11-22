@@ -1,38 +1,104 @@
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
 
-// --- Firebase Configuration ---
-// IMPORTANT: The credentials you provided are for a service account, which is meant for backend servers and MUST NOT be used in a frontend application for security reasons.
-//
-// To connect your web app to Firebase, you need to use the "Web app" configuration.
-//
-// Please follow these steps:
-// 1. Go to your Firebase project console: https://console.firebase.google.com/project/meechainmeebot-v1-218162-261fc/overview
-// 2. Go to Project Settings (click the ⚙️ gear icon).
-// 3. Under the "General" tab, scroll down to "Your apps".
-// 4. If you don't have a web app, create one.
-// 5. Find your web app and click on "Config" (or the </> icon) to see your web app's Firebase configuration.
-// 6. Copy the values from that configuration object and paste them here.
-//
-// I have pre-filled the values that can be safely derived from your project ID.
-const firebaseConfig = {
-  // TODO: PASTE YOUR WEB API KEY HERE
-  apiKey: "AIzaSy...YOUR_API_KEY_FROM_FIREBASE_CONSOLE",
-  
-  // These values are derived from your project ID
-  authDomain: "meechainmeebot-v1-218162-261fc.firebaseapp.com",
-  projectId: "meechainmeebot-v1-218162-261fc",
-  storageBucket: "meechainmeebot-v1-218162-261fc.appspot.com",
-  
-  // TODO: PASTE YOUR MESSAGING SENDER ID HERE
-  messagingSenderId: "YOUR_SENDER_ID_FROM_FIREBASE_CONSOLE",
-  
-  // TODO: PASTE YOUR APP ID HERE
-  appId: "YOUR_APP_ID_FROM_FIREBASE_CONSOLE"
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
+import { 
+  getFirestore, 
+  Firestore, 
+  collection, 
+  doc, 
+  onSnapshot, 
+  setDoc, 
+  getDoc, 
+  getDocs, 
+  query, 
+  orderBy, 
+  limit,
+  Timestamp
+} from 'firebase/firestore';
+
+const STORAGE_KEY = 'meechain-firebase-config';
+
+export type FirebaseConfig = {
+  apiKey: string;
+  authDomain: string;
+  projectId: string;
+  storageBucket: string;
+  messagingSenderId: string;
+  appId: string;
+  measurementId?: string;
+  databaseURL?: string;
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Default configuration provided for the MeeChain demo
+const DEFAULT_CONFIG: FirebaseConfig = {
+  apiKey: "AIzaSyBhprcnCRZVHE3df9wvK9VkQdSUwiGw11E",
+  authDomain: "meechainmeebot-v1-218162-261fc.firebaseapp.com",
+  databaseURL: "https://meechainmeebot-v1-218162-261fc-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "meechainmeebot-v1-218162-261fc",
+  storageBucket: "meechainmeebot-v1-218162-261fc.firebasestorage.app",
+  messagingSenderId: "412472571465",
+  appId: "1:412472571465:web:bbdc5c179e131b111ff198",
+  measurementId: "G-CZEY486FED"
+};
 
-// Export the Firestore database instance
-export const db = getFirestore(app);
+let app: FirebaseApp | undefined;
+let db: Firestore | null = null;
+
+export const getStoredConfig = (): FirebaseConfig | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    // Return stored config if available, otherwise use default
+    if (stored) return JSON.parse(stored);
+    return DEFAULT_CONFIG;
+  } catch (e) {
+    console.error("Error parsing firebase config", e);
+    return DEFAULT_CONFIG;
+  }
+};
+
+export const saveConfig = (config: FirebaseConfig) => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+};
+
+export const clearConfig = () => {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(STORAGE_KEY);
+};
+
+// Initialize Firebase using the stored or default config
+const config = getStoredConfig();
+
+if (config && config.apiKey) {
+  try {
+    if (!getApps().length) {
+      app = initializeApp(config);
+    } else {
+      app = getApp();
+    }
+    db = getFirestore(app);
+    console.log("Firebase initialized successfully.");
+  } catch (e) {
+    console.error("Failed to initialize Firebase:", e);
+  }
+}
+
+export { db, app };
+
+export const isFirebaseInitialized = (): boolean => {
+  return !!db;
+};
+
+// Re-export Firestore functions for easier import in other files
+export { 
+  collection, 
+  doc, 
+  onSnapshot, 
+  setDoc, 
+  getDoc, 
+  getDocs, 
+  query, 
+  orderBy, 
+  limit,
+  Timestamp
+};

@@ -3,6 +3,7 @@ import { Palette, PlusCircle, Edit, Trash2, LoaderCircle, AlertTriangle } from '
 import { usePersonas } from '../../contexts/PersonaContext';
 import { useMeeBots } from '../../contexts/MeeBotContext';
 import type { Persona } from '../../types';
+import { Skeleton } from '../Skeleton';
 
 // Simple modal component
 const Modal: React.FC<{ children: React.ReactNode, onClose: () => void }> = ({ children, onClose }) => (
@@ -131,7 +132,26 @@ export const PersonaManagementPage: React.FC = () => {
                 </button>
             </div>
 
-            {isLoading && <div className="flex justify-center items-center h-64"><LoaderCircle className="w-8 h-8 animate-spin text-meebot-primary"/></div>}
+            {isLoading && (
+                <div className="bg-meebot-surface border border-meebot-border rounded-lg shadow-lg">
+                    <ul className="divide-y divide-meebot-border">
+                         {Array.from({ length: 3 }).map((_, i) => (
+                            <li key={i} className="p-4 flex justify-between items-center">
+                                <div className="flex-1 pr-4">
+                                    <Skeleton className="h-6 w-1/3 mb-2" />
+                                    <Skeleton className="h-4 w-2/3 mb-2" />
+                                    <Skeleton className="h-3 w-full" />
+                                </div>
+                                <div className="flex gap-2">
+                                     <Skeleton className="w-9 h-9 rounded" />
+                                     <Skeleton className="w-9 h-9 rounded" />
+                                </div>
+                            </li>
+                         ))}
+                    </ul>
+                </div>
+            )}
+
             {error && <div className="flex flex-col justify-center items-center h-64 text-red-400"><AlertTriangle className="w-10 h-10 mb-2"/><p>{error}</p></div>}
             
             {!isLoading && !error && (
