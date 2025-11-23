@@ -3,6 +3,7 @@ import React from 'react';
 import { LayoutDashboard, Sparkles, Settings, FileText, Palette, ArrowRightLeft, Target, Gift, MessageSquare, Landmark, Pickaxe, Shield } from 'lucide-react';
 import type { NavigationItem } from '../types';
 import { BrandLogo } from './BrandLogo';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface SidebarProps {
   currentPath: string;
@@ -35,21 +36,23 @@ const NavLink: React.FC<{
 };
 
 export const Sidebar: React.FC<SidebarProps> = ({ currentPath, navigate, isOpen }) => {
+  const { t } = useLanguage();
+
   const navigationItems = React.useMemo<NavigationItem[]>(() => [
-    { path: '/', title: 'Dashboard', icon: LayoutDashboard },
-    { path: '/genesis', title: 'MeeBot Genesis', icon: Sparkles },
-    { path: '/mining', title: 'Mining Farm', icon: Pickaxe },
-    { path: '/chat', title: 'MeeBot Chat', icon: MessageSquare },
-    { path: '/governance', title: 'Governance', icon: Landmark },
-    { path: '/gifting', title: 'Gifting Center', icon: Gift },
-    { path: '/migration', title: 'Migration', icon: ArrowRightLeft },
-    { path: '/missions', title: 'Missions', icon: Target },
-    { path: '/analysis', title: 'Proposal Analysis', icon: FileText },
-    { path: '/transparency', title: 'Transparency', icon: Shield },
-    { path: '/origins', title: 'Hall of Origins', icon: Sparkles },
-    { path: '/personas', title: 'Personas', icon: Palette },
-    { path: '/settings', title: 'Settings', icon: Settings },
-  ], []);
+    { path: '/', title: t('nav.dashboard'), icon: LayoutDashboard },
+    { path: '/genesis', title: t('nav.genesis'), icon: Sparkles },
+    { path: '/mining', title: t('nav.mining'), icon: Pickaxe },
+    { path: '/chat', title: t('nav.chat'), icon: MessageSquare },
+    { path: '/governance', title: t('nav.governance'), icon: Landmark },
+    { path: '/gifting', title: t('nav.gifting'), icon: Gift },
+    { path: '/migration', title: t('nav.migration'), icon: ArrowRightLeft },
+    { path: '/missions', title: t('nav.missions'), icon: Target },
+    { path: '/analysis', title: t('nav.analysis'), icon: FileText },
+    { path: '/transparency', title: t('nav.transparency'), icon: Shield },
+    { path: '/origins', title: t('nav.origins'), icon: Sparkles },
+    { path: '/personas', title: t('nav.personas'), icon: Palette },
+    { path: '/settings', title: t('nav.settings'), icon: Settings },
+  ], [t]);
   
   const handleNavigate = (path: string) => {
     navigate(path);

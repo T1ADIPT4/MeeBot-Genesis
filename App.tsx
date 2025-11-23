@@ -21,47 +21,49 @@ import { ChatPage } from './components/pages/ChatPage';
 import { GovernancePage } from './components/pages/GovernancePage';
 import { MiningPage } from './components/pages/MiningPage';
 import { TransparencyPage } from './components/pages/TransparencyPage';
-
-
-const getHeaderTitle = (path: string): string => {
-  switch (path) {
-    case '/':
-      return 'Dashboard';
-    case '/genesis':
-      return 'MeeBot Genesis Ritual';
-    case '/chat':
-      return 'MeeBot Chat';
-    case '/governance':
-      return 'Governance Hub';
-    case '/gifting':
-      return 'Gifting Center';
-    case '/migration':
-      return 'Cross-Chain Migration';
-    case '/missions':
-      return 'Missions';
-    case '/analysis':
-      return 'Proposal Analysis';
-    case '/origins':
-      return 'Hall of Origins';
-    case '/settings':
-      return 'Settings';
-    case '/personas':
-      return 'Persona Management';
-    case '/mining':
-      return 'Mining Farm';
-    case '/transparency':
-      return 'Transparency Report';
-    default:
-      return 'MeeChain';
-  }
-};
+import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 
 // Extracted the main layout and view logic into a separate component
-// This allows it to be a child of MeeBotProvider and use the `useMeeBots` hook.
+// This allows it to be a child of MeeBotProvider and LanguageProvider.
 const AppLayout: React.FC = () => {
   const [currentPath, navigate] = useLocation();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const { currentBadgeNotification, dismissBadgeNotification } = useMeeBots();
+  const { t } = useLanguage();
+
+  const getHeaderTitle = (path: string): string => {
+    switch (path) {
+      case '/':
+      case '/dashboard':
+        return t('title.dashboard');
+      case '/genesis':
+        return t('title.genesis');
+      case '/chat':
+        return t('title.chat');
+      case '/governance':
+        return t('title.governance');
+      case '/gifting':
+        return t('title.gifting');
+      case '/migration':
+        return t('title.migration');
+      case '/missions':
+        return t('title.missions');
+      case '/analysis':
+        return t('title.analysis');
+      case '/origins':
+        return t('title.origins');
+      case '/settings':
+        return t('title.settings');
+      case '/personas':
+        return t('title.personas');
+      case '/mining':
+        return t('title.mining');
+      case '/transparency':
+        return t('title.transparency');
+      default:
+        return t('title.default');
+    }
+  };
 
   const setRoute = useCallback((path: string) => {
     navigate(path);
@@ -132,13 +134,15 @@ const AppLayout: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <SettingsProvider>
-      <PersonaProvider>
-        <MeeBotProvider>
-          <AppLayout />
-        </MeeBotProvider>
-      </PersonaProvider>
-    </SettingsProvider>
+    <LanguageProvider>
+      <SettingsProvider>
+        <PersonaProvider>
+          <MeeBotProvider>
+            <AppLayout />
+          </MeeBotProvider>
+        </PersonaProvider>
+      </SettingsProvider>
+    </LanguageProvider>
   );
 };
 

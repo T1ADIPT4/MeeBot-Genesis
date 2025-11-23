@@ -28,8 +28,11 @@ export type FirebaseConfig = {
   databaseURL?: string;
 };
 
-// Default configuration is now null to prevent auto-connection to invalid/unreachable backends.
-// This forces the application into "Simulation Mode" by default, preventing console errors.
+// Default configuration is explicitly null.
+// This ensures that the app defaults to "Simulation Mode" (offline) unless the user
+// explicitly provides valid credentials in the Settings page. This prevents connection
+// timeout errors (e.g., "Could not reach Cloud Firestore backend") caused by auto-connecting
+// to a non-existent or restricted project.
 const DEFAULT_CONFIG: FirebaseConfig | null = null;
 
 let app: FirebaseApp | undefined;
@@ -74,6 +77,7 @@ if (config && config.apiKey && config.projectId) {
     console.log(`Firebase initialized successfully for project: ${config.projectId}`);
   } catch (e) {
     console.error("Failed to initialize Firebase:", e);
+    // Fallback logic could be added here, but leaving db as null ensures strict "Simulation Mode"
   }
 } else {
     console.log("No valid Firebase configuration found. Running in Simulation Mode.");
