@@ -28,17 +28,9 @@ export type FirebaseConfig = {
   databaseURL?: string;
 };
 
-// Default configuration provided for the MeeChain demo
-const DEFAULT_CONFIG: FirebaseConfig = {
-  apiKey: "AIzaSyBhprcnCRZVHE3df9wvK9VkQdSUwiGw11E",
-  authDomain: "meechainmeebot-v1-218162-261fc.firebaseapp.com",
-  databaseURL: "https://meechainmeebot-v1-218162-261fc-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "meechainmeebot-v1-218162-261fc",
-  storageBucket: "meechainmeebot-v1-218162-261fc.firebasestorage.app",
-  messagingSenderId: "412472571465",
-  appId: "1:412472571465:web:bbdc5c179e131b111ff198",
-  measurementId: "G-CZEY486FED"
-};
+// Default configuration is now null to prevent auto-connection to invalid/unreachable backends.
+// This forces the application into "Simulation Mode" by default, preventing console errors.
+const DEFAULT_CONFIG: FirebaseConfig | null = null;
 
 let app: FirebaseApp | undefined;
 let db: Firestore | null = null;
@@ -47,12 +39,13 @@ export const getStoredConfig = (): FirebaseConfig | null => {
   if (typeof window === 'undefined') return null;
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    // Return stored config if available, otherwise use default
+    // Return stored config if available
     if (stored) return JSON.parse(stored);
+    // Otherwise return default (null)
     return DEFAULT_CONFIG;
   } catch (e) {
     console.error("Error parsing firebase config", e);
-    return DEFAULT_CONFIG;
+    return null;
   }
 };
 
@@ -69,7 +62,8 @@ export const clearConfig = () => {
 // Initialize Firebase using the stored or default config
 const config = getStoredConfig();
 
-if (config && config.apiKey) {
+// Check if config exists and has at least an API key and Project ID
+if (config && config.apiKey && config.projectId) {
   try {
     if (!getApps().length) {
       app = initializeApp(config);
@@ -77,10 +71,12 @@ if (config && config.apiKey) {
       app = getApp();
     }
     db = getFirestore(app);
-    console.log("Firebase initialized successfully.");
+    console.log(`Firebase initialized successfully for project: ${config.projectId}`);
   } catch (e) {
     console.error("Failed to initialize Firebase:", e);
   }
+} else {
+    console.log("No valid Firebase configuration found. Running in Simulation Mode.");
 }
 
 export { db, app };

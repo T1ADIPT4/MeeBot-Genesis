@@ -1,3 +1,4 @@
+
 import { onRequest } from "firebase-functions/v2/https";
 import { ethers } from "ethers";
 import { initializeApp } from "firebase-admin/app";
@@ -19,7 +20,12 @@ const CONTRACT_ABI = [
   "function miningLevel(address) view returns (uint256)"
 ];
 
-export const mine = onRequest({ cors: true }, async (req, res) => {
+export const mine = onRequest({ cors: true }, async (reqRaw, resRaw) => {
+  /** @type {any} */
+  const req = reqRaw;
+  /** @type {any} */
+  const res = resRaw;
+
   try {
     // Basic method check
     if (req.method !== 'POST') {
