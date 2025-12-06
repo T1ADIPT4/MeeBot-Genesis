@@ -11,6 +11,10 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
  * @returns A Chat object for the session.
  */
 export function startChatSession(persona: Persona, customInstructions: string): Chat {
+    if (!process.env.API_KEY) {
+        console.error("API Key is missing for Chat Service.");
+    }
+
     const behaviorConfig = applyMeeBotInstructions(customInstructions);
     let emojiInstruction = '';
     if (behaviorConfig.emojiPreference === 'enabled') {
@@ -43,6 +47,6 @@ ${customInstructions ? `\nAdditionally, follow these general user instructions:\
 export async function* sendMessageStream(chat: Chat, message: string) {
     const responseStream = await chat.sendMessageStream({ message });
     for await (const chunk of responseStream) {
-        yield chunk.text;
+        yield chunk.text || "";
     }
 }

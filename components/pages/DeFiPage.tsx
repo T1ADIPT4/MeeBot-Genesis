@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowRightLeft, RefreshCw, ChevronDown, Wallet, ArrowDown, History, Info, Coins, Send, CheckCircle, AlertTriangle, LoaderCircle, ArrowRight, ExternalLink, Link } from 'lucide-react';
+import { ArrowRightLeft, RefreshCw, ChevronDown, Wallet, ArrowDown, History, Info, Coins, Send, CheckCircle, AlertTriangle, LoaderCircle, ArrowRight, ExternalLink, Link, Lock } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { speak } from '../../services/ttsService';
 import { ethers } from 'ethers';
@@ -270,6 +270,16 @@ export const DeFiPage: React.FC = () => {
             <div className="flex flex-col lg:flex-row gap-8">
                 {/* Main Action Card */}
                 <div className="lg:w-1/2">
+                    {/* Simulation Mode Warning Banner */}
+                    {!walletAddress && (
+                        <div className="mb-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg flex items-start gap-3 animate-fade-in">
+                            <AlertTriangle className="w-5 h-5 text-yellow-400 shrink-0 mt-0.5" />
+                            <p className="text-sm text-yellow-200">
+                                {t('defi.simulation_banner')}
+                            </p>
+                        </div>
+                    )}
+
                     <div className="bg-meebot-surface border border-meebot-border rounded-xl overflow-hidden shadow-xl">
                         <div className="flex border-b border-meebot-border">
                             <TabButton active={activeTab === 'swap'} onClick={() => setActiveTab('swap')}>
@@ -393,6 +403,16 @@ export const DeFiPage: React.FC = () => {
                                         {isSwapping ? <LoaderCircle className="w-5 h-5 animate-spin mr-2"/> : <RefreshCw className="w-5 h-5 mr-2 group-hover:rotate-180 transition-transform" />}
                                         {isSwapping ? t('defi.processing') : t('defi.btn_swap')}
                                     </button>
+                                    
+                                    {/* Inline Lock Message for Simulation Mode */}
+                                    {!walletAddress && (
+                                        <div className="text-center">
+                                            <span className="text-xs font-semibold text-yellow-400/80 flex items-center justify-center gap-1.5">
+                                                <Lock className="w-3 h-3" />
+                                                {t('defi.simulation_lock')}
+                                            </span>
+                                        </div>
+                                    )}
 
                                     {swapStatus === 'success' && (
                                         <div className="bg-green-500/10 border border-green-500/30 text-green-400 p-3 rounded-lg flex flex-col gap-1 animate-fade-in">
@@ -495,6 +515,16 @@ export const DeFiPage: React.FC = () => {
                                         {isBridging ? <LoaderCircle className="w-5 h-5 animate-spin mr-2"/> : <Send className="w-5 h-5 mr-2 group-hover:translate-x-1 transition-transform" />}
                                         {isBridging ? t('defi.processing') : t('defi.btn_bridge')}
                                     </button>
+
+                                    {/* Inline Lock Message for Simulation Mode */}
+                                    {!walletAddress && (
+                                        <div className="text-center">
+                                            <span className="text-xs font-semibold text-yellow-400/80 flex items-center justify-center gap-1.5">
+                                                <Lock className="w-3 h-3" />
+                                                {t('defi.simulation_lock')}
+                                            </span>
+                                        </div>
+                                    )}
 
                                     {bridgeSuccess && (
                                         <div className="bg-green-500/10 border border-green-500/30 text-green-400 p-3 rounded-lg flex items-center animate-fade-in">

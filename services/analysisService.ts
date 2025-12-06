@@ -1,4 +1,3 @@
-
 import { GoogleGenAI } from "@google/genai";
 import { applyMeeBotInstructions } from './instructionService';
 
@@ -25,6 +24,10 @@ export function detectLanguage(text: string): { lang: string; name: string } {
  * @returns A promise that resolves to the summarized analysis as a string.
  */
 export async function analyzeProposal(proposal: string, languageName: string, customInstructions?: string): Promise<string> {
+  if (!process.env.API_KEY) {
+      throw new Error("API Key is missing. Please add API_KEY to your .env file.");
+  }
+
   const model = 'gemini-2.5-flash';
   
   const behaviorConfig = applyMeeBotInstructions(customInstructions || '');
@@ -53,7 +56,7 @@ ${proposal}
         model: model,
         contents: prompt,
     });
-    return response.text;
+    return response.text || "No analysis generated.";
   } catch (error) {
     console.error("Error analyzing proposal with Gemini:", error);
     throw new Error("The AI model failed to process the request.");

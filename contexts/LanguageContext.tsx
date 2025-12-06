@@ -138,6 +138,8 @@ const translations: Record<Language, Record<string, string>> = {
     'defi.success_bridge': 'Bridge Initiated!',
     'defi.error_insufficient': 'Insufficient Balance',
     'defi.powered_by': 'Powered by MeeDex Protocol',
+    'defi.simulation_banner': '⚠️ Transactions are simulated until you connect your wallet.',
+    'defi.simulation_lock': '🔒 Simulation Mode - Connect Wallet for Real Transactions',
 
     // Settings Content
     'settings.title': 'Global Settings',
@@ -292,6 +294,8 @@ const translations: Record<Language, Record<string, string>> = {
     'defi.success_bridge': 'เริ่มการข้ามเชนแล้ว!',
     'defi.error_insufficient': 'ยอดเงินไม่เพียงพอ',
     'defi.powered_by': 'ขับเคลื่อนโดย MeeDex Protocol',
+    'defi.simulation_banner': '⚠️ ธุรกรรมนี้เป็นการจำลองจนกว่าจะเชื่อมต่อกระเป๋าเงิน',
+    'defi.simulation_lock': '🔒 ธุรกรรมนี้เป็นการจำลองจนกว่าจะเชื่อมต่อกระเป๋าเงิน',
 
     // Settings Content
     'settings.title': 'การตั้งค่าทั่วไป',

@@ -1,9 +1,7 @@
-
 import { GoogleGenAI } from "@google/genai";
 import { applyMeeBotInstructions } from './instructionService';
 
-// FIX: Initialize GoogleGenAI directly with process.env.API_KEY and remove manual key checks
-// to align with the provided coding guidelines.
+// FIX: Use process.env.API_KEY as per guidelines
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const MAX_RETRIES = 3;
@@ -20,6 +18,10 @@ export async function generateMeeBotImage(
 ): Promise<string> {
   let lastError: unknown;
   const { personaName, description, mood, stylePrompt } = options;
+
+  if (!process.env.API_KEY) {
+      throw new Error("API Key is missing. Please add API_KEY to your .env file.");
+  }
 
   // Generate dynamic keywords to guide the AI towards a more detailed result.
   const keywords = `${personaName}, ${mood}, intricate details, high resolution, concept art, cinematic lighting`;
