@@ -1,0 +1,64 @@
+
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+    "./components/**/*.{js,ts,jsx,tsx}", // In case components are in root/components
+    "./**/*.{js,ts,jsx,tsx}", // General catch-all for this structure
+  ],
+  theme: {
+    extend: {
+      colors: {
+        'meebot-bg': '#0D0C1D',
+        'meebot-surface': '#1A1833',
+        'meebot-border': '#33315C',
+        'meebot-primary': '#00CFE8',
+        'meebot-accent': '#FF1B93',
+        'meebot-text-primary': '#F0F0FF',
+        'meebot-text-secondary': '#A0A0C0',
+      },
+      animation: {
+        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'fade-in': 'fadeIn 0.5s ease-out forwards',
+        'glow': 'glow 2s ease-in-out infinite alternate',
+        'brand-glow': 'brand-glow 3s ease-in-out infinite',
+        'particle-float': 'particle-float 3s ease-in-out infinite',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        glow: {
+          'from': {
+            boxShadow: '0 0 5px #00CFE8, 0 0 10px #00CFE8, 0 0 15px #FF1B93'
+          },
+          'to': {
+            boxShadow: '0 0 10px #00CFE8, 0 0 20px #FF1B93, 0 0 25px #FF1B93'
+          }
+        },
+        'confetti-fall': {
+          '0%': { transform: 'translateY(-10vh) rotateZ(0deg) rotateY(0deg)' },
+          '100%': { transform: 'translateY(110vh) rotateZ(720deg) rotateY(360deg)' }
+        },
+        'brand-glow': {
+          '0%, 100%': {
+            filter: 'drop-shadow(0 0 3px #00CFE8)',
+            color: '#00CFE8',
+          },
+          '50%': {
+            filter: 'drop-shadow(0 0 6px #FF1B93)',
+            color: '#FF1B93',
+          }
+        },
+        'particle-float': {
+          '0%': { transform: 'translateY(0) scale(0.5)', opacity: '0' },
+          '25%, 75%': { opacity: '1' },
+          '100%': { transform: 'translateY(-100px) scale(1)', opacity: '0' },
+        }
+      }
+    },
+  },
+  plugins: [],
+}
