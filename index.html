@@ -5,78 +5,17 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MeeBot Genesis</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              'meebot-bg': '#0D0C1D',
-              'meebot-surface': '#1A1833',
-              'meebot-border': '#33315C',
-              'meebot-primary': '#00CFE8',
-              'meebot-accent': '#FF1B93',
-              'meebot-text-primary': '#F0F0FF',
-              'meebot-text-secondary': '#A0A0C0',
-            },
-            animation: {
-              'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-              'fade-in': 'fadeIn 0.5s ease-out forwards',
-              'glow': 'glow 2s ease-in-out infinite alternate',
-              'brand-glow': 'brand-glow 3s ease-in-out infinite',
-              'particle-float': 'particle-float 3s ease-in-out infinite',
-            },
-            keyframes: {
-              fadeIn: {
-                '0%': { opacity: 0, transform: 'translateY(10px)' },
-                '100%': { opacity: 1, transform: 'translateY(0)' },
-              },
-              glow: {
-                'from': {
-                  boxShadow: '0 0 5px #00CFE8, 0 0 10px #00CFE8, 0 0 15px #FF1B93'
-                },
-                'to': {
-                  boxShadow: '0 0 10px #00CFE8, 0 0 20px #FF1B93, 0 0 25px #FF1B93'
-                }
-              },
-              'confetti-fall': {
-                '0%': { transform: 'translateY(-10vh) rotateZ(0deg) rotateY(0deg)' },
-                '100%': { transform: 'translateY(110vh) rotateZ(720deg) rotateY(360deg)' }
-              },
-              'brand-glow': {
-                '0%, 100%': {
-                  filter: 'drop-shadow(0 0 3px #00CFE8)',
-                  color: '#00CFE8',
-                },
-                '50%': {
-                  filter: 'drop-shadow(0 0 6px #FF1B93)',
-                  color: '#FF1B93',
-                }
-              },
-              'particle-float': {
-                '0%': { transform: 'translateY(0) scale(0.5)', opacity: 0 },
-                '25%, 75%': { opacity: 1 },
-                '100%': { transform: 'translateY(-100px) scale(1)', opacity: 0 },
-              }
-            }
-          }
-        }
-      }
-    </script>
   <script type="importmap">
 {
   "imports": {
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.553.0",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.1",
-    "@vercel/node": "https://aistudiocdn.com/@vercel/node@^5.5.6",
-    "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
-    "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js",
+    "react/": "https://aistudiocdn.com/react@^19.2.1/",
+    "react": "https://aistudiocdn.com/react@^19.2.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.31.0",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.556.0",
     "firebase/": "https://aistudiocdn.com/firebase@^12.6.0/",
-    "firebase-functions/": "https://aistudiocdn.com/firebase-functions@^7.0.0/",
-    "ethers": "https://aistudiocdn.com/ethers@^6.15.0",
+    "firebase-functions/": "https://aistudiocdn.com/firebase-functions@^7.0.1/",
+    "ethers": "https://aistudiocdn.com/ethers@^6.16.0",
     "firebase-admin/": "https://aistudiocdn.com/firebase-admin@^13.6.0/",
     "http": "https://aistudiocdn.com/http@^0.0.1-security",
     "fs": "https://aistudiocdn.com/fs@^0.0.1-security",
@@ -88,6 +27,6 @@
 </head>
   <body class="bg-meebot-bg text-meebot-text-primary">
     <div id="root"></div>
-    <script type="module" src="./index.tsx"></script>
+    <script type="module" src="/src/index.tsx"></script>
   </body>
 </html>

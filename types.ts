@@ -1,9 +1,5 @@
 
-// FIX: Removed import from 'react' to prevent build errors in CDN-based environments.
-// import type { ComponentType } from 'react';
-
-// Define a generic ComponentType to satisfy TypeScript without requiring the 'react' package to be installed.
-type ComponentType<P = {}> = any;
+import type { ComponentType } from 'react';
 
 export type Persona = {
   id: string;
