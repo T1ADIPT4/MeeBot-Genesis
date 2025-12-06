@@ -51,12 +51,16 @@ export const mine = onRequest({ cors: true }, async (reqRaw, resRaw) => {
     const points = await contract.miningPoints(signer.address);
     const level = await contract.miningLevel(signer.address);
 
+    const now = Date.now();
+
     // Sync the new state to Firestore for the frontend to react to
+    // Crucial: We must set 'lastMinedAt' so the frontend subscription picks it up
     await db.collection("miners").doc(signer.address).set({
       points: points.toString(),
       level: level.toString(),
       lastTx: tx.hash,
-      updatedAt: new Date().toISOString()
+      lastMinedAt: now,
+      updatedAt: new Date(now).toISOString()
     }, { merge: true });
 
     // Respond to the client
@@ -65,6 +69,7 @@ export const mine = onRequest({ cors: true }, async (reqRaw, resRaw) => {
       txHash: tx.hash,
       points: points.toString(),
       level: level.toString(),
+      lastMinedAt: now
     });
   } catch (err) {
     console.error("Mining error:", err);

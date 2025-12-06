@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Landmark, PlusCircle, LoaderCircle, CheckCircle, XCircle, ThumbsUp, ThumbsDown, Hammer, BrainCircuit, HardHat, Server, X, BarChart2, ExternalLink } from 'lucide-react';
 import { fetchAllProposals, UnifiedProposal } from '../../services/unifiedProposalService';
 import * as onChainService from '../../services/onChainProposalService';
 import { Skeleton } from '../Skeleton';
+import { useMeeBots } from '../../contexts/MeeBotContext';
 
 type ChainFilter = 'All' | 'Sepolia' | 'Fuse' | 'BNB';
 type OnChainNetwork = 'Sepolia' | 'Fuse' | 'BNB';
@@ -36,6 +38,7 @@ const CreateProposalModal: React.FC<{
     const [selectedChain, setSelectedChain] = useState<OnChainNetwork>('Sepolia');
     const [isCreating, setIsCreating] = useState(false);
     const [error, setError] = useState('');
+    const { createGovernanceProposal } = useMeeBots();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -47,6 +50,7 @@ const CreateProposalModal: React.FC<{
         setError('');
         try {
             await onChainService.createProposal(title, description, selectedChain);
+            createGovernanceProposal(); // Track gamification
             onSuccess();
         } catch (err) {
             setError('Failed to create proposal. Please try again.');
@@ -290,6 +294,7 @@ export const GovernancePage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
+    const { castVote } = useMeeBots();
 
     const loadProposals = useCallback(async () => {
         setIsLoading(true);
@@ -311,6 +316,7 @@ export const GovernancePage: React.FC = () => {
         setProcessingIds(prev => new Set(prev).add(id));
         try {
             await onChainService.voteOnProposal(id, support);
+            castVote(); // Track gamification
             await loadProposals(); // Refresh data
         } catch (e) {
             alert((e as Error).message);

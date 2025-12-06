@@ -1,39 +1,66 @@
 
 import React, { useState, useEffect } from 'react';
-import { Settings, CheckCircle, RotateCcw, Database, Save, LogOut, AlertTriangle, Shield } from 'lucide-react';
+import { Settings, RotateCcw, Database, Save, LogOut, AlertTriangle, Shield, Volume2 } from 'lucide-react';
 import { useSettings } from '../../contexts/SettingsContext';
 import { getStoredConfig, saveConfig, clearConfig, FirebaseConfig, isFirebaseInitialized } from '../../services/firebase';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const CustomInstructionPanel: React.FC = () => {
-  const { customInstructions, setCustomInstructions } = useSettings();
+  const { customInstructions, setCustomInstructions, voiceStyle, setVoiceStyle } = useSettings();
   const [instructions, setInstructions] = useState(customInstructions);
+  const [localVoiceStyle, setLocalVoiceStyle] = useState(voiceStyle);
   const [isSaved, setIsSaved] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     setInstructions(customInstructions);
-  }, [customInstructions]);
+    setLocalVoiceStyle(voiceStyle);
+  }, [customInstructions, voiceStyle]);
 
   const handleSave = () => {
     setCustomInstructions(instructions);
+    setVoiceStyle(localVoiceStyle);
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 2500);
   };
 
   const handleReset = () => {
     setInstructions("// Default MeeBot behavior");
+    setLocalVoiceStyle('Default');
   }
 
   return (
     <div className="p-6 mb-8 bg-meebot-surface border border-meebot-border rounded-lg shadow-lg animate-fade-in">
         <div className="flex items-center mb-4">
             <Settings className="w-6 h-6 text-meebot-primary mr-3"/>
-            <h2 className="text-2xl font-bold text-white">MeeBot Custom Instructions</h2>
+            <h2 className="text-2xl font-bold text-white">{t('settings.custom_instructions')}</h2>
         </div>
       
       <p className="mb-4 text-meebot-text-secondary">
-        Customize MeeBot's behavior, style, and persona adaptation logic.
+        {t('settings.custom_desc')}
       </p>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div>
+            <label className="block text-sm font-medium text-meebot-text-secondary mb-2 flex items-center">
+                <Volume2 className="w-4 h-4 mr-2 text-meebot-accent" />
+                Voice Style
+            </label>
+            <select 
+                value={localVoiceStyle} 
+                onChange={(e) => setLocalVoiceStyle(e.target.value)}
+                className="w-full p-3 bg-meebot-bg border border-meebot-border rounded-lg text-white focus:border-meebot-primary outline-none focus:ring-1 focus:ring-meebot-primary transition-all"
+            >
+                <option value="Default">Default System Voice</option>
+                <option value="CalmFemale">Calm Female (TTS)</option>
+            </select>
+            <p className="mt-1 text-xs text-meebot-text-secondary/70">
+                Overrides the default browser voice for text-to-speech interactions.
+            </p>
+        </div>
+      </div>
       
+      <label className="block text-sm font-medium text-meebot-text-secondary mb-2">Behavior Rules</label>
       <textarea
         value={instructions}
         onChange={(e) => setInstructions(e.target.value)}
@@ -47,17 +74,18 @@ const CustomInstructionPanel: React.FC = () => {
           onClick={handleReset} 
           className="flex items-center text-sm transition-colors text-meebot-text-secondary hover:text-white"
         >
-          Reset to default
+          <RotateCcw className="w-4 h-4 mr-1" />
+          {t('settings.reset')}
         </button>
         <div className="flex items-center space-x-4">
            {isSaved && (
-            <p className="text-sm font-semibold text-green-400 animate-fade-in">✅ Saved!</p>
+            <p className="text-sm font-semibold text-green-400 animate-fade-in">✅ {t('settings.saved')}</p>
           )}
           <button 
             onClick={handleSave} 
             className="px-6 py-2 font-semibold text-white transition-colors bg-meebot-primary rounded-lg hover:bg-opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-meebot-bg focus:ring-meebot-primary"
           >
-            Save Changes
+            {t('settings.save_changes')}
           </button>
         </div>
       </div>
@@ -75,7 +103,7 @@ const FirebaseConnectionPanel: React.FC = () => {
         appId: ''
     });
     const [isConnected, setIsConnected] = useState(false);
-    const [showForm, setShowForm] = useState(false);
+    const { t } = useLanguage();
 
     useEffect(() => {
         setIsConnected(isFirebaseInitialized());
@@ -111,11 +139,11 @@ const FirebaseConnectionPanel: React.FC = () => {
                 <div className="flex items-center">
                     <Database className={`w-6 h-6 mr-3 ${isConnected ? 'text-green-400' : 'text-yellow-400'}`}/>
                     <div>
-                        <h2 className="text-2xl font-bold text-white">System Connection</h2>
+                        <h2 className="text-2xl font-bold text-white">{t('settings.system_connection')}</h2>
                         <div className="flex items-center mt-1">
                             <span className={`inline-block w-2 h-2 rounded-full mr-2 ${isConnected ? 'bg-green-400 animate-pulse' : 'bg-yellow-400'}`}></span>
                             <p className={`text-sm font-mono ${isConnected ? 'text-green-400' : 'text-yellow-400'}`}>
-                                {isConnected ? 'LIVE NETWORK' : 'SIMULATION MODE'}
+                                {isConnected ? t('settings.live_network') : t('settings.simulation_mode')}
                             </p>
                         </div>
                     </div>
@@ -125,7 +153,7 @@ const FirebaseConnectionPanel: React.FC = () => {
                         onClick={handleDisconnect}
                         className="flex items-center px-3 py-1.5 text-xs font-bold text-red-300 border border-red-500/30 rounded-md hover:bg-red-500/10 transition-colors"
                     >
-                        <LogOut className="w-3 h-3 mr-1"/> Disconnect
+                        <LogOut className="w-3 h-3 mr-1"/> {t('settings.disconnect')}
                     </button>
                 )}
             </div>
@@ -135,37 +163,37 @@ const FirebaseConnectionPanel: React.FC = () => {
                     <div className="flex items-start gap-3 mb-6">
                         <AlertTriangle className="w-6 h-6 text-yellow-400 shrink-0"/>
                         <div>
-                            <h3 className="text-white font-bold mb-1">Configure Remote Backend</h3>
+                            <h3 className="text-white font-bold mb-1">{t('settings.configure_backend')}</h3>
                             <p className="text-sm text-meebot-text-secondary">
-                                To enable live mining updates, leaderboard syncing, and governance features, please provide your Firebase configuration keys. 
-                                <br/><span className="opacity-70 italic">(This data is stored locally in your browser)</span>
+                                {t('settings.configure_desc')} 
+                                <br/><span className="opacity-70 italic">{t('settings.local_storage_note')}</span>
                             </p>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
-                            <label className="block text-xs font-bold text-meebot-text-secondary uppercase mb-1">API Key *</label>
+                            <label className="block text-xs font-bold text-meebot-text-secondary uppercase mb-1">{t('settings.api_key')} *</label>
                             <input name="apiKey" type="password" value={config.apiKey} onChange={handleChange} placeholder="AIzaSy..." className="w-full p-2 bg-meebot-surface border border-meebot-border rounded text-sm"/>
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-meebot-text-secondary uppercase mb-1">Project ID *</label>
+                            <label className="block text-xs font-bold text-meebot-text-secondary uppercase mb-1">{t('settings.project_id')} *</label>
                             <input name="projectId" type="text" value={config.projectId} onChange={handleChange} placeholder="meechain-..." className="w-full p-2 bg-meebot-surface border border-meebot-border rounded text-sm"/>
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-meebot-text-secondary uppercase mb-1">Auth Domain</label>
+                            <label className="block text-xs font-bold text-meebot-text-secondary uppercase mb-1">{t('settings.auth_domain')}</label>
                             <input name="authDomain" type="text" value={config.authDomain} onChange={handleChange} placeholder=".firebaseapp.com" className="w-full p-2 bg-meebot-surface border border-meebot-border rounded text-sm"/>
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-meebot-text-secondary uppercase mb-1">Storage Bucket</label>
+                            <label className="block text-xs font-bold text-meebot-text-secondary uppercase mb-1">{t('settings.storage_bucket')}</label>
                             <input name="storageBucket" type="text" value={config.storageBucket} onChange={handleChange} placeholder=".appspot.com" className="w-full p-2 bg-meebot-surface border border-meebot-border rounded text-sm"/>
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-meebot-text-secondary uppercase mb-1">Messaging Sender ID</label>
+                            <label className="block text-xs font-bold text-meebot-text-secondary uppercase mb-1">{t('settings.messaging_sender_id')}</label>
                             <input name="messagingSenderId" type="text" value={config.messagingSenderId} onChange={handleChange} className="w-full p-2 bg-meebot-surface border border-meebot-border rounded text-sm"/>
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-meebot-text-secondary uppercase mb-1">App ID</label>
+                            <label className="block text-xs font-bold text-meebot-text-secondary uppercase mb-1">{t('settings.app_id')}</label>
                             <input name="appId" type="text" value={config.appId} onChange={handleChange} className="w-full p-2 bg-meebot-surface border border-meebot-border rounded text-sm"/>
                         </div>
                     </div>
@@ -175,19 +203,19 @@ const FirebaseConnectionPanel: React.FC = () => {
                             onClick={handleSave}
                             className="flex items-center px-6 py-3 bg-green-600 hover:bg-green-500 text-white font-bold rounded-lg transition-all shadow-lg"
                         >
-                            <Save className="w-5 h-5 mr-2"/> Save & Connect
+                            <Save className="w-5 h-5 mr-2"/> {t('settings.save_connect')}
                         </button>
                     </div>
                 </div>
             ) : (
                 <div className="bg-green-500/5 border border-green-500/20 rounded-lg p-6 text-center">
                     <Shield className="w-12 h-12 text-green-400 mx-auto mb-3"/>
-                    <h3 className="text-xl font-bold text-white mb-2">Connection Active</h3>
+                    <h3 className="text-xl font-bold text-white mb-2">{t('settings.connection_active')}</h3>
                     <p className="text-meebot-text-secondary text-sm mb-4">
-                        Your client is successfully configured to communicate with Project ID: <span className="font-mono text-white bg-black/30 px-2 py-1 rounded">{config.projectId}</span>
+                        {t('settings.connected_to')} <span className="font-mono text-white bg-black/30 px-2 py-1 rounded">{config.projectId}</span>
                     </p>
                     <p className="text-xs text-meebot-text-secondary/60">
-                        Real-time mining data, leaderboards, and proposals are now being synced.
+                        {t('settings.realtime_sync')}
                     </p>
                 </div>
             )}
@@ -197,9 +225,10 @@ const FirebaseConnectionPanel: React.FC = () => {
 
 
 export const SettingsPage: React.FC = () => {
+  const { t } = useLanguage();
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto">
-        <h1 className="text-3xl font-bold text-white mb-8">Global Settings</h1>
+        <h1 className="text-3xl font-bold text-white mb-8">{t('settings.title')}</h1>
         <FirebaseConnectionPanel />
         <CustomInstructionPanel />
     </div>

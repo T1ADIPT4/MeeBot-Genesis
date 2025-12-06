@@ -1,3 +1,4 @@
+
 // FIX: Add type declarations for the Web Speech API to resolve TypeScript errors.
 // This is necessary because these APIs are not yet part of the standard DOM typings.
 interface SpeechRecognitionErrorEvent extends Event {
@@ -41,47 +42,30 @@ declare global {
 
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Wand, Zap, AlertTriangle, Bot, Image as ImageIcon, Volume2, LoaderCircle, CheckCircle, Shuffle, Shield, Brush, BrainCircuit, Leaf, Mic } from 'lucide-react';
+import { Wand, Zap, AlertTriangle, Bot, Image as ImageIcon, Volume2, LoaderCircle, CheckCircle, Shuffle, Shield, Brush, BrainCircuit, Leaf, Mic, Globe } from 'lucide-react';
 import { generateMeeBotImage } from '../../services/geminiService';
 import { speak } from '../../services/ttsService';
 import { useSettings } from '../../contexts/SettingsContext';
 import { usePersonas } from '../../contexts/PersonaContext';
 import { useMeeBots } from '../../contexts/MeeBotContext';
+import { useLanguage } from '../../contexts/LanguageContext';
+import { detectLanguage } from '../../services/analysisService';
 import type { Persona } from '../../types';
-
-const CONFETTI_COUNT = 150;
-const COLORS = ['#00F5D4', '#FF00E6', '#FFFFFF'];
-
-const Confetti: React.FC = () => {
-    return (
-        <div className="fixed inset-0 z-50 pointer-events-none overflow-hidden" aria-hidden="true">
-            {Array.from({ length: CONFETTI_COUNT }).map((_, i) => {
-                const style = {
-                    left: `${Math.random() * 100}vw`,
-                    backgroundColor: COLORS[Math.floor(Math.random() * COLORS.length)],
-                    animation: `confetti-fall ${Math.random() * 3 + 2}s ${Math.random() * 2}s linear forwards`,
-                    width: `${Math.floor(Math.random() * 10) + 8}px`,
-                    height: `${Math.floor(Math.random() * 6) + 5}px`,
-                    opacity: Math.random() + 0.5,
-                };
-                return <div key={i} className="absolute top-[-10vh] rounded-sm" style={style} />;
-            })}
-        </div>
-    );
-};
-
-
-const loadingMessages = [
-    "Summoning your MeeBot from the digital ether...",
-    "Weaving pixels into a unique persona...",
-    "Consulting the art spirits of the blockchain...",
-    "Applying the final touches of digital paint...",
-];
+import { Confetti } from '../Confetti';
 
 const GenerativeLoadingState: React.FC = () => {
+    const { t } = useLanguage();
+    const loadingMessages = [
+        t('genesis.loading_1'),
+        t('genesis.loading_2'),
+        t('genesis.loading_3'),
+        t('genesis.loading_4'),
+    ];
+
     const [message, setMessage] = useState(loadingMessages[0]);
 
     useEffect(() => {
+        setMessage(loadingMessages[0]); // Reset on mount or language change
         const intervalId = setInterval(() => {
             setMessage(prev => {
                 const currentIndex = loadingMessages.indexOf(prev);
@@ -91,7 +75,7 @@ const GenerativeLoadingState: React.FC = () => {
         }, 2500);
 
         return () => clearInterval(intervalId);
-    }, []);
+    }, [loadingMessages]);
 
     const particles = React.useMemo(() => Array.from({ length: 7 }).map((_, i) => {
         const size = Math.random() * 0.5 + 0.25;
@@ -128,16 +112,20 @@ const GenerativeLoadingState: React.FC = () => {
     );
 };
 
-const InitialState: React.FC = () => (
-  <div className="flex flex-col items-center justify-center w-full h-full space-y-4 text-meebot-text-secondary">
-    <ImageIcon className="w-24 h-24" />
-    <p className="text-lg">Your MeeBot's visualization will appear here.</p>
-  </div>
-);
+const InitialState: React.FC = () => {
+  const { t } = useLanguage();
+  return (
+    <div className="flex flex-col items-center justify-center w-full h-full space-y-4 text-meebot-text-secondary">
+      <ImageIcon className="w-24 h-24" />
+      <p className="text-lg">{t('genesis.initial_state')}</p>
+    </div>
+  );
+}
 
 const VoiceTester: React.FC = () => {
   const [testText, setTestText] = useState('Hello, I am MeeBot!');
   const [testMood, setTestMood] = useState('serene');
+  const { t } = useLanguage();
 
   const handleTestSpeak = (e: React.FormEvent) => {
     e.preventDefault();
@@ -150,7 +138,7 @@ const VoiceTester: React.FC = () => {
     <div className="pt-4 mt-4 border-t border-meebot-border animate-fade-in">
       <form onSubmit={handleTestSpeak}>
         <label htmlFor="voice-test" className="block mb-2 text-sm font-medium text-meebot-text-secondary">
-          Test MeeBot Voice
+          {t('genesis.voice_test')}
         </label>
         <div className="flex space-x-2">
           <input
@@ -158,7 +146,7 @@ const VoiceTester: React.FC = () => {
             type="text"
             value={testText}
             onChange={(e) => setTestText(e.target.value)}
-            placeholder="Type something for MeeBot to say..."
+            placeholder={t('genesis.type_voice')}
             className="flex-grow w-full p-3 bg-meebot-surface border border-meebot-border rounded-lg focus:ring-meebot-primary focus:border-meebot-primary"
           />
           <select value={testMood} onChange={e => setTestMood(e.target.value)} className="p-3 bg-meebot-surface border border-meebot-border rounded-lg">
@@ -175,22 +163,25 @@ const VoiceTester: React.FC = () => {
           </button>
         </div>
         <p className="mt-2 text-xs text-meebot-text-secondary/70">
-          Try typing in Thai (e.g., "สวัสดี") or Japanese (e.g., "こんにちは") to hear different voices.
+          {t('genesis.try_typing')}
         </p>
       </form>
     </div>
   );
 };
 
+// Mapping of persona names to their respective Lucide icons for visual representation in the grid.
+const PERSONA_ICON_MAP: Record<string, React.ElementType> = {
+  'guardian protector': Shield,
+  'creative soul': Brush,
+  'data wizard': BrainCircuit,
+  'energetic spark': Zap,
+  'nature synth': Leaf,
+};
+
 const PersonaIcon: React.FC<{ personaName: string; className?: string }> = ({ personaName, className = "w-8 h-8 mb-3 text-meebot-primary" }) => {
-    switch (personaName.toLowerCase()) {
-        case 'guardian protector': return <Shield className={className} />;
-        case 'creative soul': return <Brush className={className} />;
-        case 'data wizard': return <BrainCircuit className={className} />;
-        case 'energetic spark': return <Zap className={className} />;
-        case 'nature synth': return <Leaf className={className} />;
-        default: return <Bot className={className} />;
-    }
+    const Icon = PERSONA_ICON_MAP[personaName.toLowerCase()] || Bot;
+    return <Icon className={className} />;
 };
 
 const PersonaSkeleton: React.FC = () => (
@@ -215,7 +206,7 @@ const StyleTagSkeleton: React.FC = () => (
 export const GenesisPage: React.FC = () => {
   const { personas, isLoading: arePersonasLoading } = usePersonas();
   const [selectedPersonaId, setSelectedPersonaId] = useState<string>('');
-  const [description, setDescription] = useState('a radiant, crystalline bot holding a glowing lotus flower');
+  const [description, setDescription] = useState('');
   const [mood, setMood] = useState('serene');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -226,10 +217,13 @@ export const GenesisPage: React.FC = () => {
   const abortControllerRef = useRef<AbortController | null>(null);
   const { customInstructions } = useSettings();
   const { mintMeeBot } = useMeeBots();
+  const { t } = useLanguage();
 
   const [isRecording, setIsRecording] = useState(false);
   const [speechError, setSpeechError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  
+  const [detectedLangName, setDetectedLangName] = useState('English');
 
   const selectedPersona = personas.find(p => p.id === selectedPersonaId);
   const [selectedStyle, setSelectedStyle] = useState('');
@@ -257,6 +251,16 @@ export const GenesisPage: React.FC = () => {
       }
     };
   }, []);
+  
+  // Detect language whenever description changes
+  useEffect(() => {
+    if (!description.trim()) {
+        setDetectedLangName('English');
+        return;
+    }
+    const { name } = detectLanguage(description);
+    setDetectedLangName(name);
+  }, [description]);
   
   const handleVisualize = useCallback(async () => {
     if (!description.trim()) {
@@ -389,13 +393,13 @@ export const GenesisPage: React.FC = () => {
     <div className="flex flex-col h-full lg:flex-row">
       {showConfetti && <Confetti />}
       <div className="w-full p-6 space-y-6 overflow-y-auto border-b lg:w-2/5 xl:w-1/3 lg:border-b-0 lg:border-r border-meebot-border">
-        <h2 className="text-2xl font-bold text-white">Define Your MeeBot</h2>
+        <h2 className="text-2xl font-bold text-white">{t('genesis.define')}</h2>
         
         <div className="space-y-6">
             <div>
               <label className="block mb-3 text-md font-semibold text-meebot-text-secondary">
                 <span className="text-xs font-bold text-meebot-accent px-2 py-1 bg-meebot-accent/10 rounded-full mr-2">1</span>
-                Choose a Persona
+                {t('genesis.step1')}
               </label>
               {arePersonasLoading ? (
                 <PersonaSkeleton />
@@ -424,7 +428,7 @@ export const GenesisPage: React.FC = () => {
                 <div className="flex items-center justify-between mb-3">
                   <label className="text-md font-semibold text-meebot-text-secondary">
                      <span className="text-xs font-bold text-meebot-accent px-2 py-1 bg-meebot-accent/10 rounded-full mr-2">2</span>
-                    Select an Art Style
+                    {t('genesis.step2')}
                   </label>
                   <button
                     onClick={handleRandomizeStyle}
@@ -433,7 +437,7 @@ export const GenesisPage: React.FC = () => {
                     aria-label="Randomize art style"
                   >
                     <Shuffle className="w-4 h-4 mr-1" />
-                    Randomize Style
+                    {t('genesis.random_style')}
                   </button>
                 </div>
                  {arePersonasLoading ? (
@@ -458,17 +462,24 @@ export const GenesisPage: React.FC = () => {
             )}
 
             <div>
-              <label htmlFor="description" className="block mb-2 text-md font-semibold text-meebot-text-secondary">
-                <span className="text-xs font-bold text-meebot-accent px-2 py-1 bg-meebot-accent/10 rounded-full mr-2">3</span>
-                Describe Your Vision
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="description" className="text-md font-semibold text-meebot-text-secondary flex items-center">
+                  <span className="text-xs font-bold text-meebot-accent px-2 py-1 bg-meebot-accent/10 rounded-full mr-2">3</span>
+                  {t('genesis.step3')}
+                  {description.trim() && (
+                    <span className="ml-2 text-xs font-normal text-meebot-primary bg-meebot-primary/10 px-2 py-0.5 rounded-full flex items-center animate-fade-in">
+                        <Globe className="w-3 h-3 mr-1" /> {detectedLangName} Detected
+                    </span>
+                  )}
+                </label>
+              </div>
               <div className="relative">
                 <textarea
                   id="description"
                   rows={4}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="e.g., a small bot made of moss and stone, with glowing mushroom eyes"
+                  placeholder={t('genesis.placeholder')}
                   className="w-full p-3 pr-12 bg-meebot-surface border border-meebot-border rounded-lg focus:ring-meebot-primary focus:border-meebot-primary"
                 />
                 <button
@@ -490,14 +501,14 @@ export const GenesisPage: React.FC = () => {
             <div>
                <label htmlFor="mood" className="block mb-2 text-md font-semibold text-meebot-text-secondary">
                  <span className="text-xs font-bold text-meebot-accent px-2 py-1 bg-meebot-accent/10 rounded-full mr-2">4</span>
-                 Set the Mood
+                 {t('genesis.step4')}
                 </label>
                <input
                 id="mood"
                 type="text"
                 value={mood}
                 onChange={(e) => setMood(e.target.value)}
-                placeholder="e.g., joyful, contemplative, energetic"
+                placeholder={t('genesis.mood_placeholder')}
                 className="w-full p-3 bg-meebot-surface border border-meebot-border rounded-lg focus:ring-meebot-primary focus:border-meebot-primary"
                />
             </div>
@@ -511,7 +522,7 @@ export const GenesisPage: React.FC = () => {
             className="flex items-center justify-center w-full px-6 py-4 text-lg font-semibold text-white transition-all duration-200 bg-meebot-primary rounded-lg shadow-lg hover:bg-opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-meebot-bg focus:ring-meebot-primary disabled:bg-meebot-text-secondary disabled:cursor-not-allowed"
           >
             <Wand className={`w-6 h-6 mr-3 ${isLoading ? 'animate-spin' : ''}`} />
-            {isLoading ? 'Visualizing...' : 'Visualize'}
+            {isLoading ? t('genesis.visualizing') : t('genesis.visualize')}
           </button>
           
           <button 
@@ -520,7 +531,7 @@ export const GenesisPage: React.FC = () => {
             className="flex items-center justify-center w-full px-6 py-4 font-semibold text-meebot-primary transition-all duration-200 bg-transparent border-2 border-meebot-accent rounded-lg hover:bg-meebot-accent hover:text-meebot-bg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-meebot-bg focus:ring-meebot-accent disabled:border-meebot-text-secondary/50 disabled:text-meebot-text-secondary/50 disabled:cursor-not-allowed"
           >
             <Zap className="w-6 h-6 mr-3" />
-            Mint as NFT
+            {t('genesis.mint')}
           </button>
 
           {mintSuccess && (

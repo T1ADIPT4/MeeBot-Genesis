@@ -1,4 +1,6 @@
+
 import { applyMeeBotInstructions } from './instructionService';
+import { detectLanguage as analyzeLanguage } from './analysisService';
 
 let voices: SpeechSynthesisVoice[] = [];
 
@@ -16,17 +18,13 @@ if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !=
 }
 
 /**
- * A simple language detector based on character sets.
+ * Wrapper for the analysisService language detection to ensure return type compatibility.
  * @param text The text to analyze.
  * @returns A two-letter language code (e.g., 'th', 'ja', 'en').
  */
 function detectLanguage(text: string): string {
-  // Thai
-  if (/[\u0E00-\u0E7F]/.test(text)) return 'th';
-  // Japanese
-  if (/[\u3040-\u30FF\u31F0-\u31FF]/.test(text)) return 'ja';
-  // Default to English
-  return 'en';
+    const { lang } = analyzeLanguage(text);
+    return lang;
 }
 
 /**
@@ -47,15 +45,25 @@ export function speak(text: string, mood?: string) {
   const utterance = new SpeechSynthesisUtterance(text);
   const lang = detectLanguage(text);
 
-  // Get voice style preference from custom instructions in localStorage
+  // Get voice style preference
   let voiceStyle: 'CalmFemale' | 'Default' = 'Default';
+  
   try {
-    const storedInstructions = window.localStorage.getItem('meebot-custom-instructions');
-    if (storedInstructions) {
-        voiceStyle = applyMeeBotInstructions(storedInstructions).voiceStyle;
+    // Check for explicit setting first
+    const explicitStyle = window.localStorage.getItem('meebot-voice-style');
+    if (explicitStyle === 'CalmFemale') {
+        voiceStyle = 'CalmFemale';
+    } else if (explicitStyle === 'Default') {
+        voiceStyle = 'Default';
+    } else {
+        // Fallback to custom instructions for backward compatibility or if not set
+        const storedInstructions = window.localStorage.getItem('meebot-custom-instructions');
+        if (storedInstructions) {
+            voiceStyle = applyMeeBotInstructions(storedInstructions).voiceStyle;
+        }
     }
   } catch (e) {
-      console.warn('Could not parse custom instructions for TTS.', e);
+      console.warn('Could not parse settings for TTS.', e);
   }
 
   // Set base pitch and rate based on style

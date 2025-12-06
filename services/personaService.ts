@@ -1,62 +1,74 @@
 import type { Persona } from '../types';
 import { mockPersonas } from '../data/mockPersonas';
 
-// Create an in-memory store initialized with mock data.
-// This allows the app to be fully functional without a Firebase backend.
-let inMemoryPersonas: Persona[] = [...mockPersonas];
-let nextId = inMemoryPersonas.length + 1;
+const STORAGE_KEY = 'meebot_personas_v1';
 
-// Simulate network delay to mimic an async API call.
-const simulateDelay = (ms: number = 200) => new Promise(resolve => setTimeout(resolve, ms));
+// Helper to simulate network delay for realistic UI feedback
+const simulateDelay = (ms: number = 400) => new Promise(resolve => setTimeout(resolve, ms));
 
-/**
- * Fetches personas from the in-memory store.
- * @returns A promise that resolves to an array of Persona objects.
- */
-export async function getPersonas(): Promise<Persona[]> {
-  await simulateDelay();
-  // Return a sorted copy of the personas.
-  return [...inMemoryPersonas].sort((a, b) => a.name.localeCompare(b.name));
+const loadFromStorage = (): Persona[] => {
+  if (typeof window === 'undefined') return [...mockPersonas];
+  try {
+    const item = window.localStorage.getItem(STORAGE_KEY);
+    if (item) {
+        const parsed = JSON.parse(item);
+        if (Array.isArray(parsed)) {
+            return parsed;
+        }
+    }
+  } catch (error) {
+    console.warn('Failed to load personas:', error);
+  }
+  return [...mockPersonas];
+};
+
+const saveToStorage = (personas: Persona[]) => {
+    if (typeof window === 'undefined') return;
+    try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(personas));
+    } catch (error) {
+        console.warn('Failed to save personas:', error);
+    }
 }
 
-/**
- * Adds a new persona to the in-memory store.
- * @param personaData The data for the new persona.
- * @returns A promise that resolves to the newly created Persona object.
- */
+// In-memory cache initialized from storage
+let personasCache: Persona[] = loadFromStorage();
+
+export async function getPersonas(): Promise<Persona[]> {
+  await simulateDelay();
+  // Refresh from storage to sync across tabs (basic implementation)
+  personasCache = loadFromStorage();
+  return [...personasCache].sort((a, b) => a.name.localeCompare(b.name));
+}
+
 export async function addPersona(personaData: Omit<Persona, 'id'>): Promise<Persona> {
   await simulateDelay();
   const newPersona: Persona = {
-    id: `persona-${nextId++}`,
+    id: `p-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
     ...personaData,
   };
-  inMemoryPersonas.push(newPersona);
+  personasCache = [...personasCache, newPersona];
+  saveToStorage(personasCache);
   return newPersona;
 }
 
-/**
- * Updates an existing persona in the in-memory store.
- * @param id The ID of the persona to update.
- * @param personaData The new data for the persona.
- * @returns A promise that resolves to the updated Persona object.
- */
 export async function updatePersona(id: string, personaData: Omit<Persona, 'id'>): Promise<Persona> {
   await simulateDelay();
-  const personaIndex = inMemoryPersonas.findIndex(p => p.id === id);
-  if (personaIndex === -1) {
-    throw new Error('Persona not found');
-  }
-  const updatedPersona = { ...inMemoryPersonas[personaIndex], ...personaData };
-  inMemoryPersonas[personaIndex] = updatedPersona;
+  const index = personasCache.findIndex(p => p.id === id);
+  if (index === -1) throw new Error('Persona not found');
+  
+  const updatedPersona = { ...personasCache[index], ...personaData };
+  personasCache = [
+      ...personasCache.slice(0, index),
+      updatedPersona,
+      ...personasCache.slice(index + 1)
+  ];
+  saveToStorage(personasCache);
   return updatedPersona;
 }
 
-/**
- * Deletes a persona from the in-memory store.
- * @param id The ID of the persona to delete.
- * @returns A promise that resolves when the deletion is complete.
- */
 export async function deletePersona(id: string): Promise<void> {
   await simulateDelay();
-  inMemoryPersonas = inMemoryPersonas.filter(p => p.id !== id);
+  personasCache = personasCache.filter(p => p.id !== id);
+  saveToStorage(personasCache);
 }

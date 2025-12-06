@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { LayoutDashboard, Sparkles, Settings, FileText, Palette, ArrowRightLeft, Target, Gift, MessageSquare, Landmark, Pickaxe, Shield } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { LayoutDashboard, Sparkles, Settings, FileText, Palette, ArrowRightLeft, Target, Gift, MessageSquare, Landmark, Pickaxe, Shield, Coins, Ticket } from 'lucide-react';
 import type { NavigationItem } from '../types';
 import { BrandLogo } from './BrandLogo';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -39,9 +39,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPath, navigate, isOpen 
   const { t } = useLanguage();
 
   const navigationItems = React.useMemo<NavigationItem[]>(() => [
-    { path: '/', title: t('nav.dashboard'), icon: LayoutDashboard },
+    { path: '/', title: t('nav.home'), icon: Pickaxe },
+    { path: '/portfolio', title: t('nav.portfolio'), icon: LayoutDashboard },
     { path: '/genesis', title: t('nav.genesis'), icon: Sparkles },
-    { path: '/mining', title: t('nav.mining'), icon: Pickaxe },
+    { path: '/redemption', title: t('nav.perks'), icon: Ticket },
+    { path: '/defi', title: t('nav.defi'), icon: Coins },
     { path: '/chat', title: t('nav.chat'), icon: MessageSquare },
     { path: '/governance', title: t('nav.governance'), icon: Landmark },
     { path: '/gifting', title: t('nav.gifting'), icon: Gift },

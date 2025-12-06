@@ -216,15 +216,15 @@ export function subscribeToLeaderboard(callback: (data: LeaderboardEntry[]) => v
  * Subscribes to a specific miner's stats for real-time sync.
  * Handles permission-denied errors gracefully.
  * @param address The wallet address to subscribe to.
- * @param callback Function to call with the latest points and level.
+ * @param callback Function to call with the latest points, level, and lastMinedAt timestamp.
  * @returns Unsubscribe function.
  */
-export function subscribeToMiner(address: string, callback: (data: { points: number, level: number } | null) => void): () => void {
+export function subscribeToMiner(address: string, callback: (data: { points: number, level: number, lastMinedAt: number } | null) => void): () => void {
     let unsubscribeFirestore: (() => void) | undefined;
     let stopMock: (() => void) | null = null;
     let isUnsubscribed = false;
 
-    const safeCallback = (data: { points: number, level: number } | null) => {
+    const safeCallback = (data: { points: number, level: number, lastMinedAt: number } | null) => {
         if (!isUnsubscribed) callback(data);
     };
 
@@ -234,7 +234,9 @@ export function subscribeToMiner(address: string, callback: (data: { points: num
             if (isUnsubscribed) return;
             const entry = mockLeaderboardData.find(e => e.minerAddress === address);
             if (entry) {
-                safeCallback({ points: entry.points, level: entry.level });
+                // For mock data, we approximate lastMinedAt via local time if needed, 
+                // but since mockLeaderboard doesn't store timestamps, we just send 0 or current
+                safeCallback({ points: entry.points, level: entry.level, lastMinedAt: Date.now() });
             } else {
                 safeCallback(null);
             }
@@ -242,7 +244,7 @@ export function subscribeToMiner(address: string, callback: (data: { points: num
         
         // Initial check
         const entry = mockLeaderboardData.find(e => e.minerAddress === address);
-        if (entry) safeCallback({ points: entry.points, level: entry.level });
+        if (entry) safeCallback({ points: entry.points, level: entry.level, lastMinedAt: Date.now() });
         else safeCallback(null);
 
         return () => clearInterval(interval);
@@ -255,9 +257,13 @@ export function subscribeToMiner(address: string, callback: (data: { points: num
                  next: (doc) => {
                     if (doc.exists()) {
                         const data = doc.data();
-                        safeCallback({ points: Number(data.points) || 0, level: Number(data.level) || 0 });
+                        safeCallback({ 
+                            points: Number(data.points) || 0, 
+                            level: Number(data.level) || 0,
+                            lastMinedAt: Number(data.lastMinedAt) || 0 
+                        });
                     } else {
-                        safeCallback({ points: 0, level: 0 });
+                        safeCallback({ points: 0, level: 0, lastMinedAt: 0 });
                     }
                  },
                  error: (error) => {
@@ -287,7 +293,7 @@ export function subscribeToMiner(address: string, callback: (data: { points: num
 /**
  * Syncs the current user's score to Firestore (and mock data).
  */
-export async function updateMinerScore(address: string, name: string, points: number, level: number, avatar: string) {
+export async function updateMinerScore(address: string, name: string, points: number, level: number, avatar: string, lastMinedAt: number) {
     // 1. Update Firestore if active (Fire and Forget style)
     if (isFirebaseInitialized() && db) {
         // We don't await this to keep UI snappy, but we catch errors to prevent unhandled rejections
@@ -296,7 +302,8 @@ export async function updateMinerScore(address: string, name: string, points: nu
             points,
             level,
             avatar,
-            lastActive: new Date().toISOString()
+            lastMinedAt: lastMinedAt,
+            lastActive: new Date().toISOString() // Keep human readable version too
         }, { merge: true }).catch(e => {
             // Silently ignore permission errors here to prevent console spam,
             // as the UI relies on local/mock state for immediate feedback anyway.
@@ -304,7 +311,6 @@ export async function updateMinerScore(address: string, name: string, points: nu
     }
 
     // 2. Update mock data for immediate local feedback.
-    // This ensures that even if Firestore fails (permission denied), the user sees their progress locally.
     const existingIndex = mockLeaderboardData.findIndex(e => e.minerAddress === address);
     const userEntry: LeaderboardEntry = {
         rank: 0, // Rank will be recalculated by the loop or next fetch

@@ -1,5 +1,9 @@
-// FIX: Add import for React to resolve namespace error for React.ComponentType.
-import type { ComponentType } from 'react';
+
+// FIX: Removed import from 'react' to prevent build errors in CDN-based environments.
+// import type { ComponentType } from 'react';
+
+// Define a generic ComponentType to satisfy TypeScript without requiring the 'react' package to be installed.
+type ComponentType<P = {}> = any;
 
 export type Persona = {
   id: string;
@@ -21,12 +25,23 @@ export type Attribute = {
   value: string | number;
 };
 
+export type Benefit = {
+  id: string;
+  title: string;
+  description: string;
+  cost: number; // Cost in MeeCoins
+  type: 'discount' | 'access' | 'physical' | 'digital';
+  isRedeemed?: boolean; // For one-time perks
+};
+
 export type Badge = {
   id: string;
   name: string;
   description: string;
   icon: ComponentType<{ className?: string }>;
   unlockedAt: number;
+  tier: 'Bronze' | 'Silver' | 'Gold' | 'Legend' | 'Special';
+  benefits: Benefit[];
 };
 
 export type Proposal = {
@@ -59,7 +74,7 @@ export type UserMission = {
 
 
 export type MemoryEvent = {
-  type: "Mint" | "MiningGift" | "Badge" | "Proposal" | "EmotionShift" | "Migration" | "Mission" | "Gift" | "Chat" | "Mining";
+  type: "Mint" | "MiningGift" | "Badge" | "Proposal" | "EmotionShift" | "Migration" | "Mission" | "Gift" | "Chat" | "Mining" | "Redemption";
   message: string;
   timestamp: number;
   // Fields to support multi-chain finality simulation
@@ -129,6 +144,7 @@ export type OnChainProposal = {
 
 export type MiningState = {
   points: number;
+  coins: number; // Spendable currency for Redemptions
   level: number;
   isMining: boolean;
   lastMinedAt: number;

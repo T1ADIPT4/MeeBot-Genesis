@@ -1,7 +1,9 @@
+
 import React from 'react';
 import type { Badge } from '../types';
 import { Award, X } from 'lucide-react';
 import { speak } from '../services/ttsService';
+import { Confetti } from './Confetti';
 
 interface BadgeNotificationProps {
     badge: Badge;
@@ -25,6 +27,7 @@ export const BadgeNotification: React.FC<BadgeNotificationProps> = ({ badge, onC
             role="dialog"
             aria-labelledby="badge-notification-title"
         >
+            <Confetti />
             <div 
                 className="relative bg-meebot-surface border-2 border-meebot-primary rounded-lg shadow-2xl p-6 w-full max-w-md text-center m-4 animate-glow" 
                 onClick={e => e.stopPropagation()}

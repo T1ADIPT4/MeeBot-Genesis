@@ -1,12 +1,19 @@
+
 import React, { useEffect, useState, useRef } from 'react';
-import { Shield, Code, Database, CheckCircle, ExternalLink, Server, Lock, Cpu, Award, Bot, FileCheck, Eye, Hash, Terminal, Search, Activity } from 'lucide-react';
+import { Shield, Code, Database, CheckCircle, ExternalLink, Server, Lock, Cpu, Award, Bot, Eye, Hash, Terminal, Activity, RefreshCw } from 'lucide-react';
 import { isFirebaseInitialized, getStoredConfig } from '../../services/firebase';
 
 const CORE_CONTRACTS = [
     { 
-        name: 'MeeToken', 
-        address: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0', 
-        features: 'Points System, Token Rewards, Genesis Ritual, NFT Membership, Gating', 
+        name: 'MeeChainToken (MEE)', 
+        address: '0x5FbDB2315678afecb367f032d93F642f64180aa3', 
+        features: 'Governance, Staking, Mining Rewards, Genesis Ritual', 
+        status: 'Active' as const 
+    },
+    { 
+        name: 'T2P Token (Utility)', 
+        address: '0x765ddcca3849ef7cf3b8203ca79705bebf864444', 
+        features: 'Utility, Liquidity, Bridge', 
         status: 'Active' as const 
     },
     { 
@@ -16,15 +23,9 @@ const CORE_CONTRACTS = [
         status: 'Active' as const 
     },
     { 
-        name: 'BadgeNFTUpgrade', 
-        address: '0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9', 
-        features: 'Upgrade Logic, Burn + Mint Flow, Level Sync', 
-        status: 'Active' as const 
-    },
-    { 
-        name: 'QuestManager', 
-        address: '0x5FC8d32690cc91D4c39d9d3abcBD16989F875707', 
-        features: 'Mission Tracking, Reward Dispatch', 
+        name: 'MeeExchange', 
+        address: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0', 
+        features: 'Swap, Liquidity Pools', 
         status: 'Active' as const 
     },
 ];
@@ -215,8 +216,8 @@ export const TransparencyPage: React.FC = () => {
             <div>
                 <h1 className="text-3xl md:text-4xl font-bold text-white">Transparency Report</h1>
                 <p className="mt-2 text-meebot-text-secondary max-w-2xl">
-                    MeeChain Mining System: Verifiable, Fair, and Open. <br/>
-                    Verify every mechanic, contract interaction, and state update.
+                    MeeChain Ecosystem: Verifiable, Fair, and Open. <br/>
+                    Verify every mechanic, contract interaction, and state update directly on-chain.
                 </p>
             </div>
         </div>
@@ -239,7 +240,7 @@ export const TransparencyPage: React.FC = () => {
                             <CheckCircle className="w-3 h-3 mr-1.5"/> Audited by Certik
                         </span>
                         <span className="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-bold flex items-center">
-                            <Search className="w-3 h-3 mr-1.5"/> Open Source
+                            <Code className="w-3 h-3 mr-1.5"/> Verified Source
                         </span>
                     </div>
                 </div>
@@ -307,7 +308,7 @@ export const TransparencyPage: React.FC = () => {
                 
                 <MechanicSection title="1. Mining Mechanics & Leveling Criteria" icon={Cpu}>
                     <p>
-                        The mining process uses a <strong>Proof-of-Contribution</strong> model. Every mining action interacts with the <span className="text-meebot-primary font-mono">MeeToken</span> contract for point accumulation.
+                        The mining process uses a <strong>Proof-of-Contribution</strong> model. Every mining action interacts with the <span className="text-meebot-primary font-mono">MeeChainToken (MEE)</span> contract for point accumulation.
                     </p>
                     <div className="bg-meebot-bg p-5 rounded-lg border border-meebot-border my-4">
                         <h4 className="font-bold text-white mb-3 text-sm flex items-center gap-2">
@@ -336,14 +337,14 @@ export const TransparencyPage: React.FC = () => {
                         <Eye className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" />
                         <div>
                             <strong className="block text-blue-400 mb-1">Verification Step:</strong>
-                            You can query the <code className="bg-black/30 px-1 rounded">miningPoints(address)</code> function on Etherscan using your wallet address to confirm that your on-chain points match what is displayed in the Mining Rig UI. Use the terminal on the left to simulate this check.
+                            You can query the <code className="bg-black/30 px-1 rounded">balanceOf(address)</code> on the MEE contract to confirm that your on-chain points match what is displayed in the Mining Rig UI. Use the terminal on the left to simulate this check.
                         </div>
                     </div>
                 </MechanicSection>
 
                 <MechanicSection title="2. NFT Badge Evolution" icon={Award}>
                     <p>
-                        Badges are <span className="text-meebot-primary font-mono">ERC-1155</span> tokens managed by the <span className="text-meebot-primary font-mono">MeeBadgeNFT</span> contract. Evolution logic (Burn + Mint) is handled by <span className="text-meebot-primary font-mono">BadgeNFTUpgrade</span>.
+                        Badges are <span className="text-meebot-primary font-mono">ERC-1155</span> tokens managed by the <span className="text-meebot-primary font-mono">MeeBadgeNFT</span> contract. Evolution logic is handled automatically when leveling milestones are reached.
                     </p>
                      <div className="overflow-x-auto mt-4 border border-meebot-border rounded-lg bg-meebot-bg">
                         <table className="w-full text-sm text-left">
@@ -385,7 +386,33 @@ export const TransparencyPage: React.FC = () => {
                     </div>
                 </MechanicSection>
 
-                <MechanicSection title="3. Data Synchronization & Audit Logs" icon={Database}>
+                <MechanicSection title="3. Tokenomics & Utility" icon={RefreshCw}>
+                    <p>
+                        The ecosystem is powered by two primary tokens: <span className="text-meebot-primary font-mono">MEE</span> (Governance) and <span className="text-meebot-accent font-mono">T2P</span> (Utility).
+                    </p>
+                     <ul className="mt-4 space-y-3 text-sm">
+                        <li className="flex items-start p-3 bg-meebot-bg border border-meebot-border rounded-lg">
+                            <div className="bg-meebot-primary/20 p-1.5 rounded mr-3">
+                                <Cpu className="w-4 h-4 text-meebot-primary"/>
+                            </div>
+                            <div>
+                                <strong className="text-white block mb-1">MeeChainToken (MEE)</strong>
+                                <p className="text-meebot-text-secondary text-xs">Used for governance voting, staking rewards, and critical system upgrades. Holders shape the future of the protocol.</p>
+                            </div>
+                        </li>
+                        <li className="flex items-start p-3 bg-meebot-bg border border-meebot-border rounded-lg">
+                            <div className="bg-meebot-accent/20 p-1.5 rounded mr-3">
+                                <Activity className="w-4 h-4 text-meebot-accent"/>
+                            </div>
+                            <div>
+                                <strong className="text-white block mb-1">T2P Token</strong>
+                                <p className="text-meebot-text-secondary text-xs">The high-velocity utility token used for micro-transactions, AI request fees, and cross-chain bridging liquidity.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </MechanicSection>
+
+                <MechanicSection title="4. Data Synchronization & Audit Logs" icon={Database}>
                     <p>
                         We utilize a dual-state system. The <strong>Blockchain</strong> acts as the immutable source of truth for ownership and balances, while <strong>Firestore</strong> provides real-time indexing for the leaderboard.
                     </p>
@@ -428,31 +455,6 @@ export const TransparencyPage: React.FC = () => {
                                 <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div> Activity Feeds</li>
                             </ul>
                         </div>
-                    </div>
-                    
-                    <h4 className="font-bold text-white text-sm mb-2 flex items-center gap-2"><FileCheck className="w-4 h-4 text-meebot-primary"/> System Versioning</h4>
-                    <div className="bg-meebot-bg rounded-lg border border-meebot-border overflow-hidden">
-                        <table className="w-full text-sm text-left">
-                            <thead className="bg-meebot-surface text-meebot-text-secondary text-xs uppercase">
-                                <tr>
-                                    <th className="px-4 py-2">Module</th>
-                                    <th className="px-4 py-2">Version</th>
-                                    <th className="px-4 py-2">Last Audit</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-meebot-border text-meebot-text-primary">
-                                <tr>
-                                    <td className="px-4 py-2">Mining Contract (MeeToken)</td>
-                                    <td className="px-4 py-2 font-mono text-xs text-meebot-accent">v1.2.0</td>
-                                    <td className="px-4 py-2 text-xs">2023-10-15 (Certik)</td>
-                                </tr>
-                                <tr>
-                                    <td className="px-4 py-2">NFT Core (MeeBadgeNFT)</td>
-                                    <td className="px-4 py-2 font-mono text-xs text-meebot-accent">v2.1.0</td>
-                                    <td className="px-4 py-2 text-xs">2023-12-10 (Halborn)</td>
-                                </tr>
-                            </tbody>
-                        </table>
                     </div>
                 </MechanicSection>
 

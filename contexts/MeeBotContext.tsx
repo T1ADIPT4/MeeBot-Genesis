@@ -1,12 +1,13 @@
 
 import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
-import type { MeeBotMetadata, MemoryEvent, Badge, Proposal, UserMission, MiningState } from '../types';
+import type { MeeBotMetadata, MemoryEvent, Badge, Proposal, UserMission, MiningState, Benefit } from '../types';
 import { mockMeeBots } from '../data/mockMeeBots';
 import { activateMiningGift, logMintEvent, logMiningGiftEvent, updateMinerScore, subscribeToMiner } from '../services/miningService';
-import { ALL_BADGES, checkNewBadges } from '../services/badgeService';
+import { ALL_BADGES, checkNewBadges, ProgressStats } from '../services/badgeService';
 import { speak } from '../services/ttsService';
 import { ALL_MISSIONS, shouldResetMission } from '../services/missionService';
 import { Award } from 'lucide-react';
+import { detectLanguage } from '../services/analysisService';
 
 
 // --- LocalStorage Keys ---
@@ -30,15 +31,31 @@ const CHAINS_MAP = new Map(CHAINS.map(c => [c.name, c]));
 const getRandomChain = () => CHAINS[Math.floor(Math.random() * CHAINS.length)];
 
 // Constant for the current user's wallet address simulation
-// Exporting it so it can be used in the UI components for consistent ID matching
 export const USER_WALLET_ADDRESS = "0xUser...Wallet";
+
+// Extended progress state to track gamification metrics
+interface ProgressState {
+  proposalsAnalyzed: number;
+  personasCreated: number;
+  votesCast: number;
+  governanceProposalsCreated: number;
+  hasConnectedWallet: boolean;
+}
+
+const DEFAULT_PROGRESS: ProgressState = {
+    proposalsAnalyzed: 0,
+    personasCreated: 0,
+    votesCast: 0,
+    governanceProposalsCreated: 0,
+    hasConnectedWallet: false,
+};
 
 interface MeeBotContextType {
   meebots: MeeBotMetadata[];
   timeline: MemoryEvent[];
   unlockedBadges: Badge[];
   proposals: Proposal[];
-  progress: { proposalsAnalyzed: number; personasCreated: number; };
+  progress: ProgressState;
   userMissions: UserMission[];
   miningState: MiningState;
   mintMeeBot: (data: { persona: string, prompt: string, emotion: string, image: string }) => MeeBotMetadata;
@@ -50,16 +67,38 @@ interface MeeBotContextType {
   executeMining: () => Promise<void>;
   currentBadgeNotification: Badge | null;
   dismissBadgeNotification: () => void;
+  // New actions for gamification
+  connectWallet: () => void;
+  castVote: () => void;
+  createGovernanceProposal: () => void;
+  redeemBenefit: (badgeId: string, benefit: Benefit) => Promise<boolean>;
 }
 
 const MeeBotContext = createContext<MeeBotContextType | undefined>(undefined);
 
-// Helper to safely parse JSON from localStorage
-function loadFromStorage<T>(key: string, defaultValue: T): T {
+// Helper to safely parse JSON from localStorage with strict type checking
+function safeLoadFromStorage<T>(key: string, defaultValue: T): T {
   if (typeof window === 'undefined') return defaultValue;
   try {
     const item = window.localStorage.getItem(key);
-    return item ? JSON.parse(item) : defaultValue;
+    if (item) {
+        const parsed = JSON.parse(item);
+        
+        // Critical Fix: Explicitly check for arrays to prevent "map is not a function" errors
+        // caused by corrupted localStorage where arrays were saved as objects.
+        if (Array.isArray(defaultValue)) {
+             return Array.isArray(parsed) ? (parsed as T) : defaultValue;
+        }
+        
+        // For standard objects, we merge with default to ensure new fields are present.
+        // We explicitly check that 'parsed' is not an array here to avoid spreading an array into an object.
+        if (typeof defaultValue === 'object' && defaultValue !== null && typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+             return { ...defaultValue, ...parsed };
+        }
+        
+        return parsed as T;
+    }
+    return defaultValue;
   } catch (error) {
     console.warn(`Error reading localStorage key "${key}":`, error);
     return defaultValue;
@@ -67,48 +106,59 @@ function loadFromStorage<T>(key: string, defaultValue: T): T {
 }
 
 // A version of the Badge type that can be stored in JSON.
-// Functions like the icon component cannot be serialized.
 type StorableBadge = Omit<Badge, 'icon'>;
 
 
-// Helper to detect language from prompt
-function detectLanguage(text: string): { code: string; name: string } {
-  if (/[\u0E00-\u0E7F]/.test(text)) return { code: 'th', name: 'Thai' };
-  if (/[\u3040-\u30FF\u31F0-\u31FF]/.test(text)) return { code: 'ja', name: 'Japanese' };
-  return { code: 'en', name: 'English' };
-}
-
-
 export const MeeBotProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [meebots, setMeebots] = useState<MeeBotMetadata[]>(() => loadFromStorage(MEEBOT_BOTS_KEY, mockMeeBots));
+  const [meebots, setMeebots] = useState<MeeBotMetadata[]>(() => {
+    const loadedBots = safeLoadFromStorage(MEEBOT_BOTS_KEY, mockMeeBots);
+    return Array.isArray(loadedBots) ? loadedBots : mockMeeBots;
+  });
+  
   const [timeline, setTimeline] = useState<MemoryEvent[]>(() => {
-      const storedTimeline = loadFromStorage<MemoryEvent[]>(MEEBOT_TIMELINE_KEY, []);
-      if (storedTimeline.length > 0) {
-          // If timeline exists, ensure it has the new fields
-          return storedTimeline.map(event => ({
+      const loadedTimeline = safeLoadFromStorage<MemoryEvent[]>(MEEBOT_TIMELINE_KEY, []);
+      // Ensure we have an array before attempting to map
+      const safeTimeline = Array.isArray(loadedTimeline) ? loadedTimeline : [];
+      
+      if (safeTimeline.length > 0) {
+          return safeTimeline.map(event => ({
               ...event,
-              status: event.status || 'confirmed', // Backwards compatibility
+              status: event.status || 'confirmed',
               chainName: event.chainName || 'Sepolia'
           }));
       }
-      // If no timeline, create from mock bots
       return mockMeeBots.flatMap(bot => bot.memory.map(event => ({ ...event, status: 'confirmed' as const, chainName: 'Sepolia' }))).sort((a,b) => b.timestamp - a.timestamp);
   });
+  
   const [unlockedBadges, setUnlockedBadges] = useState<Badge[]>(() => {
-    const stored = loadFromStorage<StorableBadge[]>(MEEBOT_BADGES_KEY, []);
-    // Re-hydrate the full badge object, including the icon component, from the master list.
-    return stored.map(storableBadge => {
+    const loadedBadges = safeLoadFromStorage<StorableBadge[]>(MEEBOT_BADGES_KEY, []);
+    // Guard against potential corruption in local storage
+    const safeStoredBadges = Array.isArray(loadedBadges) ? loadedBadges : [];
+    
+    return safeStoredBadges.map(storableBadge => {
       const fullBadge = ALL_BADGES.find(b => b.id === storableBadge.id);
       return {
         ...storableBadge,
-        icon: fullBadge?.icon || Award, // Use a fallback icon if not found
+        icon: fullBadge?.icon || Award,
+        tier: fullBadge?.tier || 'Bronze',
+        benefits: fullBadge?.benefits || []
       };
     });
   });
-  const [proposals, setProposals] = useState<Proposal[]>(() => loadFromStorage(MEEBOT_PROPOSALS_KEY, []));
-  const [progress, setProgress] = useState<{ proposalsAnalyzed: number; personasCreated: number; }>(() => loadFromStorage(MEEBOT_PROGRESS_KEY, { proposalsAnalyzed: 0, personasCreated: 0 }));
-  const [userMissions, setUserMissions] = useState<UserMission[]>(() => loadFromStorage(MEEBOT_MISSIONS_KEY, []));
-  const [miningState, setMiningState] = useState<MiningState>(() => loadFromStorage(MEEBOT_MINING_KEY, { points: 0, level: 0, isMining: false, lastMinedAt: 0 }));
+  
+  const [proposals, setProposals] = useState<Proposal[]>(() => {
+      const loadedProposals = safeLoadFromStorage(MEEBOT_PROPOSALS_KEY, []);
+      return Array.isArray(loadedProposals) ? loadedProposals : [];
+  });
+  
+  const [progress, setProgress] = useState<ProgressState>(() => safeLoadFromStorage(MEEBOT_PROGRESS_KEY, DEFAULT_PROGRESS));
+  
+  const [userMissions, setUserMissions] = useState<UserMission[]>(() => {
+      const loadedMissions = safeLoadFromStorage(MEEBOT_MISSIONS_KEY, []);
+      return Array.isArray(loadedMissions) ? loadedMissions : [];
+  });
+  
+  const [miningState, setMiningState] = useState<MiningState>(() => safeLoadFromStorage(MEEBOT_MINING_KEY, { points: 0, coins: 0, level: 0, isMining: false, lastMinedAt: 0 }));
   const [currentBadgeNotification, setCurrentBadgeNotification] = useState<Badge | null>(null);
 
   // --- Real-time Mining State Sync ---
@@ -116,13 +166,13 @@ export const MeeBotProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const unsubscribe = subscribeToMiner(USER_WALLET_ADDRESS, (remoteData) => {
         if (remoteData) {
             setMiningState(prev => {
-                // Only update if the remote state is actually different/newer to avoid jitter
-                // Here we assume remote serves as the source of truth for points/level
-                if (remoteData.points !== prev.points || remoteData.level !== prev.level) {
+                // Only sync metrics that come from backend (points/level), preserve local coins if not synced yet (mock scenario)
+                if (remoteData.lastMinedAt > prev.lastMinedAt || remoteData.points !== prev.points) {
                     return {
                         ...prev,
                         points: remoteData.points,
-                        level: remoteData.level
+                        level: remoteData.level,
+                        lastMinedAt: remoteData.lastMinedAt
                     };
                 }
                 return prev;
@@ -136,7 +186,6 @@ export const MeeBotProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   useEffect(() => { window.localStorage.setItem(MEEBOT_BOTS_KEY, JSON.stringify(meebots)); }, [meebots]);
   useEffect(() => { window.localStorage.setItem(MEEBOT_TIMELINE_KEY, JSON.stringify(timeline)); }, [timeline]);
   useEffect(() => {
-    // When saving badges, strip out the non-serializable 'icon' property.
     const storableBadges: StorableBadge[] = unlockedBadges.map(({ icon, ...rest }) => rest);
     window.localStorage.setItem(MEEBOT_BADGES_KEY, JSON.stringify(storableBadges));
   }, [unlockedBadges]);
@@ -155,17 +204,17 @@ export const MeeBotProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                     event.status === 'staged' ? { ...event, status: 'confirmed' } : event
                 )
             );
-        }, 3500); // 3.5 second confirmation delay
+        }, 3500); 
 
         return () => clearTimeout(timer);
     }
   }, [timeline]);
   
-  const awardBadges = useCallback((newlyUnlocked: Badge[]) => {
+  const awardBadges = useCallback((newlyUnlocked: Omit<Badge, 'unlockedAt'>[]) => {
       if (newlyUnlocked.length > 0) {
-          const uniqueNewBadges = newlyUnlocked.filter(newBadge => 
+          const uniqueNewBadges: Badge[] = newlyUnlocked.filter(newBadge => 
               !unlockedBadges.some(existing => existing.id === newBadge.id)
-          );
+          ).map(b => ({ ...b, unlockedAt: Date.now() }));
 
           if (uniqueNewBadges.length === 0) return;
 
@@ -182,7 +231,6 @@ export const MeeBotProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           }));
           setTimeline(prev => [...prev, ...badgeEvents].sort((a,b) => b.timestamp - a.timestamp));
 
-          // Show notification for the first unlocked badge
           setCurrentBadgeNotification(uniqueNewBadges[0]);
       }
   }, [unlockedBadges]);
@@ -196,13 +244,11 @@ export const MeeBotProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         for (const missionDef of missionsForAction) {
             let userMission = updatedMissions.find(um => um.missionId === missionDef.id);
             
-            // Reset if cadence has passed
             if (userMission && shouldResetMission(userMission, missionDef)) {
                 updatedMissions = updatedMissions.filter(um => um.missionId !== missionDef.id);
-                userMission = undefined; // Treat as new
+                userMission = undefined; 
             }
 
-            // Don't update completed missions unless they have been reset
             if (userMission?.status === 'completed') {
                 continue;
             }
@@ -218,7 +264,6 @@ export const MeeBotProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             if (userMission.progress >= missionDef.target) {
                 userMission.status = 'completed';
                 
-                // Add to timeline
                 const randomChain = getRandomChain();
                 const missionEvent: MemoryEvent = {
                     type: "Mission",
@@ -230,33 +275,69 @@ export const MeeBotProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                 };
                 setTimeline(prev => [missionEvent, ...prev].sort((a,b) => b.timestamp - a.timestamp));
 
-                // Handle rewards
                 if (missionDef.reward.badgeId) {
                     const badgeToAward = ALL_BADGES.find(b => b.id === missionDef.reward.badgeId);
                     if (badgeToAward) {
-                        awardBadges([{...badgeToAward, unlockedAt: now}]);
+                        awardBadges([badgeToAward]);
                     }
                 }
             }
         }
-        
         return updatedMissions;
     });
   }, [awardBadges]);
   
-  const checkAllBadges = useCallback((currentProgress: { proposalsAnalyzed: number; personasCreated: number; }, meebotCount: number, currentMiningLevel: number) => {
-    const progressData = { ...currentProgress, meebotCount, miningLevel: currentMiningLevel };
+  const checkAllBadges = useCallback((currentProgress: ProgressState, meebotCount: number, currentMiningLevel: number, actionChain?: string) => {
+    const stats: ProgressStats = { ...currentProgress, meebotCount, miningLevel: currentMiningLevel };
     const existingBadgeIds = new Set<string>(unlockedBadges.map(b => b.id));
-    const newlyUnlocked = checkNewBadges(progressData, existingBadgeIds);
+    const newlyUnlocked = checkNewBadges(stats, existingBadgeIds, actionChain);
     awardBadges(newlyUnlocked);
   }, [unlockedBadges, awardBadges]);
   
+  // --- Actions & Reactions ---
+
+  const connectWallet = useCallback(() => {
+    setProgress(prev => {
+        if (prev.hasConnectedWallet) return prev;
+        const updated = { ...prev, hasConnectedWallet: true };
+        checkAllBadges(updated, meebots.length, miningState.level);
+        return updated;
+    });
+    // Magical UX: First time voice reaction
+    if (!progress.hasConnectedWallet) {
+         speak("Welcome to MeeChain! Your neural link is established.", "joyful");
+    }
+  }, [meebots.length, miningState.level, checkAllBadges, progress.hasConnectedWallet]);
+
+  const castVote = useCallback(() => {
+    setProgress(prev => {
+        const updated = { ...prev, votesCast: prev.votesCast + 1 };
+        checkAllBadges(updated, meebots.length, miningState.level);
+        return updated;
+    });
+    if (progress.votesCast === 0) {
+        speak("Your voice has been recorded. Thank you for shaping the future.", "stoic");
+    }
+  }, [meebots.length, miningState.level, checkAllBadges, progress.votesCast]);
+
+  const createGovernanceProposal = useCallback(() => {
+    setProgress(prev => {
+        const updated = { ...prev, governanceProposalsCreated: prev.governanceProposalsCreated + 1 };
+        checkAllBadges(updated, meebots.length, miningState.level);
+        return updated;
+    });
+    if (progress.governanceProposalsCreated === 0) {
+        speak("A bold move! You are the first to propose a new path.", "energetic");
+    }
+  }, [meebots.length, miningState.level, checkAllBadges, progress.governanceProposalsCreated]);
+
   const mintMeeBot = useCallback((data: { persona: string, prompt: string, emotion: string, image: string }): MeeBotMetadata => {
     const now = Date.now();
     const idNum = Math.floor(Math.random() * 9000) + 1000;
     const newId = `mb-${idNum}`;
     const txHash = `0x${[...Array(64)].map(() => Math.floor(Math.random() * 16).toString(16)).join('')}`;
     const miningGift = activateMiningGift(data.persona);
+    // Use centralized detection
     const lang = detectLanguage(data.prompt);
     const randomChain = getRandomChain();
 
@@ -270,7 +351,7 @@ export const MeeBotProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       image: data.image,
       createdAt: now,
       creator: '0xYou...Now',
-      language: lang.code,
+      language: lang.lang,
       voice_message: `I am ${data.persona}, born of your inspiration.`,
       external_url: `https://meechain.app/meebot/${idNum}`,
       miningGift: miningGift,
@@ -292,14 +373,21 @@ export const MeeBotProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     
     setMeebots(prev => {
         const newBotList = [newMeeBot, ...prev];
-        checkAllBadges(progress, newBotList.length, miningState.level);
+        // Pass chain info to check for chain-specific badges
+        checkAllBadges(progress, newBotList.length, miningState.level, randomChain.name);
         return newBotList;
     });
     setTimeline(prev => [...newMeeBot.memory, ...prev].sort((a,b) => b.timestamp - a.timestamp));
 
     updateMissionsOnAction('mint');
+    
+    // First Mint Reaction
+    if (meebots.length === 0) {
+        speak(`Welcome to the world, ${newMeeBot.name}. You are the first of many.`, "joyful");
+    }
+
     return newMeeBot;
-  }, [progress, checkAllBadges, updateMissionsOnAction, miningState.level]);
+  }, [progress, checkAllBadges, updateMissionsOnAction, miningState.level, meebots.length]);
 
   const migrateMeeBot = useCallback(async (botId: string, toChainName: string) => {
     const fromBot = meebots.find(b => b.id === botId);
@@ -332,7 +420,9 @@ export const MeeBotProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setTimeline(prev => [migrationEvent, ...prev].sort((a,b) => b.timestamp - a.timestamp));
 
     speak(`Migration complete. Your MeeBot has arrived on the ${toChain.name} network.`, 'joyful');
-  }, [meebots]);
+    // Check for Chain Badges on migration too
+    checkAllBadges(progress, meebots.length, miningState.level, toChainName);
+  }, [meebots, progress, miningState.level, checkAllBadges]);
   
   const addProposalAnalysis = useCallback((proposalText: string, summary: string) => {
       const now = Date.now();
@@ -384,8 +474,7 @@ export const MeeBotProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       const now = Date.now();
-      const fromAddress = "your wallet"; 
-
+      
       const giftEvent: MemoryEvent = {
           type: "Gift",
           message: `${botToGift.name} was gifted to ${recipientAddress.substring(0,10)}... with message: "${message}"`,
@@ -418,55 +507,48 @@ export const MeeBotProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setTimeline(prev => [chatEvent, ...prev].sort((a,b) => b.timestamp - a.timestamp));
   }, [meebots]);
 
-  // --- Mining Functionality ---
   const executeMining = useCallback(async () => {
       if (miningState.isMining) return;
 
       const now = Date.now();
-      // Simple rate limiting: Prevent mining if less than 2 seconds have passed
-      if (now - miningState.lastMinedAt < 2000) {
+      // Increase cooldown to 30s to prevent rapid mining and simulate network confirmations
+      if (now - miningState.lastMinedAt < 30000) {
           console.warn("Mining too fast. Cooldown active.");
           return;
       }
 
       setMiningState(prev => ({ ...prev, isMining: true }));
       
-      // Simulate Smart Contract Latency & Logic
-      // In a real app, this would call the Firebase function /api/mine
       await new Promise(resolve => setTimeout(resolve, 2500));
 
       const randomChain = getRandomChain();
 
       setMiningState(prev => {
           const newPoints = prev.points + 1;
-          // Smart Contract Logic: Level up every 10 points
+          const newCoins = (prev.coins || 0) + 1; // Award 1 MeeCoin per mine
           const newLevel = Math.floor(newPoints / 10); 
           const levelUp = newLevel > prev.level;
+          const minedAt = Date.now();
           
-          // Update timeline
           const miningEvent: MemoryEvent = {
               type: 'Mining',
-              message: `Mined 1 Point on ${randomChain.name}.${levelUp ? ` Leveled up to ${newLevel}!` : ''}`,
-              timestamp: now,
+              message: `Mined 1 Point & 1 MeeCoin on ${randomChain.name}.${levelUp ? ` Leveled up to ${newLevel}!` : ''}`,
+              timestamp: minedAt,
               status: 'staged',
               chainName: randomChain.name,
               chainId: randomChain.chainId,
           };
           setTimeline(old => [miningEvent, ...old].sort((a,b) => b.timestamp - a.timestamp));
           
-          // Check for new badges triggered by the new level
           if (levelUp) {
-               // We need to use the *new* level for checking badges
                checkAllBadges(progress, meebots.length, newLevel);
                speak(`Level Up! You have reached Mining Level ${newLevel}.`, 'energetic');
           } else {
-               // 10% chance to speak a mining phrase
                if (Math.random() > 0.9) {
                    speak("Mining sequence complete. Points accrued.", "stoic");
                }
           }
 
-          // --- SYNC TO LEADERBOARD (Mock/Optimistic) ---
           const activeBot = meebots[0];
           if (activeBot) {
              updateMinerScore(
@@ -474,15 +556,17 @@ export const MeeBotProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                 activeBot.name,
                 newPoints,
                 newLevel,
-                activeBot.image
+                activeBot.image,
+                minedAt
              );
           }
 
           return {
               points: newPoints,
+              coins: newCoins,
               level: newLevel,
               isMining: false,
-              lastMinedAt: now
+              lastMinedAt: minedAt
           };
       });
   }, [progress, meebots, checkAllBadges, miningState.isMining, miningState.lastMinedAt]);
@@ -492,8 +576,55 @@ export const MeeBotProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       setCurrentBadgeNotification(null);
   };
   
+  const redeemBenefit = useCallback(async (badgeId: string, benefit: Benefit): Promise<boolean> => {
+      // Check Balance
+      if (miningState.coins < benefit.cost) {
+          return false;
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate tx delay
+
+      setMiningState(prev => ({ ...prev, coins: prev.coins - benefit.cost }));
+      
+      const randomChain = getRandomChain();
+      const redemptionEvent: MemoryEvent = {
+          type: 'Redemption',
+          message: `Redeemed benefit: "${benefit.title}" for ${benefit.cost} Coins.`,
+          timestamp: Date.now(),
+          status: 'staged',
+          chainName: randomChain.name,
+          chainId: randomChain.chainId,
+      };
+      
+      setTimeline(prev => [redemptionEvent, ...prev].sort((a,b) => b.timestamp - a.timestamp));
+      
+      speak(`Perk redeemed! You are now utilizing your ecosystem benefits.`, 'joyful');
+      return true;
+  }, [miningState.coins]);
+  
   return (
-    <MeeBotContext.Provider value={{ meebots, timeline, unlockedBadges, proposals, progress, userMissions, miningState, mintMeeBot, addProposalAnalysis, notifyPersonaCreated, migrateMeeBot, giftMeeBot, logChatMemory, executeMining, currentBadgeNotification, dismissBadgeNotification }}>
+    <MeeBotContext.Provider value={{ 
+        meebots, 
+        timeline, 
+        unlockedBadges, 
+        proposals, 
+        progress, 
+        userMissions, 
+        miningState, 
+        mintMeeBot, 
+        addProposalAnalysis, 
+        notifyPersonaCreated, 
+        migrateMeeBot, 
+        giftMeeBot, 
+        logChatMemory, 
+        executeMining, 
+        currentBadgeNotification, 
+        dismissBadgeNotification, 
+        connectWallet,
+        castVote,
+        createGovernanceProposal,
+        redeemBenefit
+    }}>
       {children}
     </MeeBotContext.Provider>
   );

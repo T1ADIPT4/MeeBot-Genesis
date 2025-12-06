@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useLocation } from './hooks/useLocation';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
@@ -21,7 +21,10 @@ import { ChatPage } from './components/pages/ChatPage';
 import { GovernancePage } from './components/pages/GovernancePage';
 import { MiningPage } from './components/pages/MiningPage';
 import { TransparencyPage } from './components/pages/TransparencyPage';
+import { DeFiPage } from './components/pages/DeFiPage';
+import { RedemptionPage } from './components/pages/RedemptionPage';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
+import { SplashScreen } from './components/SplashScreen';
 
 // Extracted the main layout and view logic into a separate component
 // This allows it to be a child of MeeBotProvider and LanguageProvider.
@@ -34,8 +37,10 @@ const AppLayout: React.FC = () => {
   const getHeaderTitle = (path: string): string => {
     switch (path) {
       case '/':
+        return t('title.mining');
+      case '/portfolio':
       case '/dashboard':
-        return t('title.dashboard');
+        return t('title.portfolio');
       case '/genesis':
         return t('title.genesis');
       case '/chat':
@@ -46,6 +51,8 @@ const AppLayout: React.FC = () => {
         return t('title.gifting');
       case '/migration':
         return t('title.migration');
+      case '/defi':
+        return t('title.defi');
       case '/missions':
         return t('title.missions');
       case '/analysis':
@@ -60,6 +67,8 @@ const AppLayout: React.FC = () => {
         return t('title.mining');
       case '/transparency':
         return t('title.transparency');
+      case '/redemption':
+        return t('title.redemption');
       default:
         return t('title.default');
     }
@@ -73,7 +82,9 @@ const AppLayout: React.FC = () => {
   const renderCurrentPage = () => {
     switch (currentPath) {
       case '/':
-      case '/dashboard': // Allow both
+        return <MiningPage />;
+      case '/portfolio':
+      case '/dashboard': // Keeping dashboard path redirecting to same page logic
         return <DashboardPage navigate={setRoute} />;
       case '/genesis':
         return <GenesisPage />;
@@ -85,6 +96,8 @@ const AppLayout: React.FC = () => {
         return <GiftingPage />;
       case '/migration':
         return <MigrationPage />;
+      case '/defi':
+        return <DeFiPage />;
       case '/missions':
         return <MissionsPage />;
       case '/analysis':
@@ -99,6 +112,8 @@ const AppLayout: React.FC = () => {
         return <MiningPage />;
       case '/transparency':
         return <TransparencyPage />;
+      case '/redemption':
+        return <RedemptionPage />;
       default:
         return <PlaceholderPage title="404 - Not Found" />;
     }
@@ -133,12 +148,15 @@ const AppLayout: React.FC = () => {
 }
 
 const App: React.FC = () => {
+  const [showSplash, setShowSplash] = useState(true);
+
   return (
     <LanguageProvider>
       <SettingsProvider>
         <PersonaProvider>
           <MeeBotProvider>
-            <AppLayout />
+            {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
+            {!showSplash && <AppLayout />}
           </MeeBotProvider>
         </PersonaProvider>
       </SettingsProvider>

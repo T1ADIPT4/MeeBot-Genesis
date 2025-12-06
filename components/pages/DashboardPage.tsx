@@ -1,31 +1,36 @@
+
 import React from 'react';
 import { Bot, ArrowRight, Gift, BookOpen, Zap, FileText, Award, Hash, ExternalLink, CheckCircle } from 'lucide-react';
 import { useMeeBots } from '../../contexts/MeeBotContext';
 import { TimelineIcon } from './HallOfOriginsPage'; 
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface DashboardPageProps {
   navigate: (path: string) => void;
 }
 
-const WelcomeBanner: React.FC<{ navigate: (path: string) => void }> = ({ navigate }) => (
-    <div className="p-8 text-center bg-meebot-surface border border-meebot-border rounded-lg shadow-lg animate-fade-in">
-      <div className="relative inline-block mb-6">
-        <Bot className="w-24 h-24 text-meebot-primary animate-pulse-slow" />
-        <div className="absolute top-0 left-0 w-24 h-24 rounded-full opacity-20 bg-meebot-primary blur-2xl"></div>
-      </div>
-      <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">Welcome to MeeBot Genesis</h1>
-      <p className="max-w-2xl mx-auto mt-3 text-md text-meebot-text-secondary">
-        Your journey begins here. Create, visualize, and bring your unique MeeBot companions to life.
-      </p>
-      <button
-        onClick={() => navigate('/genesis')}
-        className="inline-flex items-center justify-center px-6 py-3 mt-8 text-md font-semibold text-white transition-all duration-200 bg-meebot-primary rounded-lg shadow-lg hover:bg-opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-meebot-surface focus:ring-meebot-primary"
-      >
-        Create your First MeeBot
-        <ArrowRight className="w-5 h-5 ml-2" />
-      </button>
-    </div>
-);
+const WelcomeBanner: React.FC<{ navigate: (path: string) => void }> = ({ navigate }) => {
+    const { t } = useLanguage();
+    return (
+        <div className="p-8 text-center bg-meebot-surface border border-meebot-border rounded-lg shadow-lg animate-fade-in">
+          <div className="relative inline-block mb-6">
+            <Bot className="w-24 h-24 text-meebot-primary animate-pulse-slow" />
+            <div className="absolute top-0 left-0 w-24 h-24 rounded-full opacity-20 bg-meebot-primary blur-2xl"></div>
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">{t('dashboard.welcome')}</h1>
+          <p className="max-w-2xl mx-auto mt-3 text-md text-meebot-text-secondary">
+            {t('dashboard.subtitle')}
+          </p>
+          <button
+            onClick={() => navigate('/genesis')}
+            className="inline-flex items-center justify-center px-6 py-3 mt-8 text-md font-semibold text-white transition-all duration-200 bg-meebot-primary rounded-lg shadow-lg hover:bg-opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-meebot-surface focus:ring-meebot-primary"
+          >
+            {t('dashboard.create_btn')}
+            <ArrowRight className="w-5 h-5 ml-2" />
+          </button>
+        </div>
+    );
+};
 
 const getChainTagStyle = (chainName?: string) => {
     switch (chainName) {
@@ -39,6 +44,7 @@ const getChainTagStyle = (chainName?: string) => {
 
 const MeeBotProfileCard: React.FC = () => {
     const { meebots } = useMeeBots();
+    const { t } = useLanguage();
     const latestBot = meebots[0];
 
     return (
@@ -58,17 +64,17 @@ const MeeBotProfileCard: React.FC = () => {
                                 </p>
                             </div>
                             <a href={latestBot.external_url} target="_blank" rel="noopener noreferrer" className="flex items-center text-xs text-meebot-text-secondary hover:text-meebot-primary transition-colors">
-                                View on chain <ExternalLink className="w-3 h-3 ml-1" />
+                                {t('dashboard.view_on_chain')} <ExternalLink className="w-3 h-3 ml-1" />
                             </a>
                         </div>
                         <p className="text-sm text-meebot-text-secondary mt-2 italic">"{latestBot.soul_prompt}"</p>
-                        <p className="text-xs text-yellow-400 mt-2">Current Emotion: <strong className="capitalize">{latestBot.emotion}</strong></p>
+                        <p className="text-xs text-yellow-400 mt-2">{t('dashboard.current_emotion')}: <strong className="capitalize">{latestBot.emotion}</strong></p>
                     </div>
                 </div>
             </div>
             <div className="px-6 py-2 bg-black/20 flex items-center justify-center text-xs text-meebot-text-secondary/70 border-t border-meebot-border/50">
                 <Bot className="w-3 h-3 mr-1.5 text-meebot-primary/70" />
-                <span>Powered by MEECHAIN</span>
+                <span>{t('dashboard.powered_by')}</span>
             </div>
         </div>
     );
@@ -76,12 +82,13 @@ const MeeBotProfileCard: React.FC = () => {
 
 const BadgeCollectionCard: React.FC = () => {
     const { unlockedBadges } = useMeeBots();
+    const { t } = useLanguage();
 
     return (
         <div className="p-6 bg-meebot-surface border border-meebot-border rounded-lg shadow-lg animate-fade-in">
             <div className="flex items-center mb-4">
                 <Award className="w-6 h-6 text-yellow-400 mr-3" />
-                <h3 className="text-xl font-bold text-white">Badge Collection</h3>
+                <h3 className="text-xl font-bold text-white">{t('dashboard.badges')}</h3>
             </div>
             {unlockedBadges.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -96,7 +103,7 @@ const BadgeCollectionCard: React.FC = () => {
                     ))}
                 </div>
             ) : (
-                <p className="text-sm text-center text-meebot-text-secondary py-4">No badges unlocked yet. Keep exploring!</p>
+                <p className="text-sm text-center text-meebot-text-secondary py-4">{t('dashboard.badges_empty')}</p>
             )}
         </div>
     );
@@ -104,13 +111,14 @@ const BadgeCollectionCard: React.FC = () => {
 
 const ProposalStatusCard: React.FC = () => {
     const { proposals } = useMeeBots();
+    const { t } = useLanguage();
     const recentProposals = proposals.slice(0, 3);
 
     return (
         <div className="p-6 bg-meebot-surface border border-meebot-border rounded-lg shadow-lg animate-fade-in">
             <div className="flex items-center mb-4">
                 <FileText className="w-6 h-6 text-blue-400 mr-3" />
-                <h3 className="text-xl font-bold text-white">Recent Proposals</h3>
+                <h3 className="text-xl font-bold text-white">{t('dashboard.proposals')}</h3>
             </div>
             {recentProposals.length > 0 ? (
                 <ul className="space-y-3">
@@ -125,7 +133,7 @@ const ProposalStatusCard: React.FC = () => {
                     ))}
                 </ul>
             ) : (
-                <p className="text-sm text-center text-meebot-text-secondary py-4">No proposals analyzed yet. Visit the Analysis page!</p>
+                <p className="text-sm text-center text-meebot-text-secondary py-4">{t('dashboard.proposals_empty')}</p>
             )}
         </div>
     );
@@ -133,6 +141,7 @@ const ProposalStatusCard: React.FC = () => {
 
 const TimelineCard: React.FC = () => {
     const { timeline } = useMeeBots();
+    const { t } = useLanguage();
     const [filter, setFilter] = React.useState<'Unified' | 'Sepolia' | 'Fuse' | 'BNB'>('Unified');
 
     const filteredEvents = React.useMemo(() => {
@@ -150,7 +159,7 @@ const TimelineCard: React.FC = () => {
         <div className="p-6 bg-meebot-surface border border-meebot-border rounded-lg shadow-lg animate-fade-in">
             <div className="flex items-center mb-4">
                 <BookOpen className="w-6 h-6 text-meebot-primary mr-3" />
-                <h3 className="text-xl font-bold text-white">Timeline</h3>
+                <h3 className="text-xl font-bold text-white">{t('dashboard.timeline')}</h3>
             </div>
             <div className="flex items-center gap-2 mb-4">
                 {filterOptions.map(option => {
@@ -192,12 +201,12 @@ const TimelineCard: React.FC = () => {
                                         {event.status === 'staged' ? (
                                             <div className="flex items-center text-xs text-yellow-400 animate-pulse">
                                                 <span className="w-2 h-2 mr-1.5 bg-yellow-400 rounded-full"></span>
-                                                Pending
+                                                {t('dashboard.status_pending')}
                                             </div>
                                         ) : (
                                             <div className="flex items-center text-xs text-green-400 animate-fade-in">
                                                 <CheckCircle className="w-3 h-3 mr-1"/>
-                                                Confirmed
+                                                {t('dashboard.status_confirmed')}
                                             </div>
                                         )}
                                     </div>
@@ -207,7 +216,7 @@ const TimelineCard: React.FC = () => {
                     ))
                 ) : (
                     <li className="py-4 text-center text-sm text-meebot-text-secondary">
-                        No recent events found for this chain.
+                        {t('dashboard.timeline_empty')}
                     </li>
                 )}
             </ul>
@@ -217,13 +226,14 @@ const TimelineCard: React.FC = () => {
 
 const ActivityGrid: React.FC = () => {
     const { meebots } = useMeeBots();
+    const { t } = useLanguage();
     const latestBot = meebots[0];
 
     const getBoostForEmotion = (emotion: string): { name: string, description: string } | null => {
         const lowerEmotion = emotion.toLowerCase();
-        if (lowerEmotion.includes('joy') || lowerEmotion.includes('excit')) return { name: 'Energy Boost', description: 'Increased chance for rare item discoveries.' };
-        if (lowerEmotion.includes('serene') || lowerEmotion.includes('contemplative')) return { name: 'Focus Boost', description: 'Slightly improved proposal analysis summaries.' };
-        if (lowerEmotion.includes('stoic') || lowerEmotion.includes('guardian')) return { name: 'Stability Boost', description: 'Reduced downtime during network turbulence.' };
+        if (lowerEmotion.includes('joy') || lowerEmotion.includes('excit')) return { name: t('dashboard.boost_energy_name'), description: t('dashboard.boost_energy_desc') };
+        if (lowerEmotion.includes('serene') || lowerEmotion.includes('contemplative')) return { name: t('dashboard.boost_focus_name'), description: t('dashboard.boost_focus_desc') };
+        if (lowerEmotion.includes('stoic') || lowerEmotion.includes('guardian')) return { name: t('dashboard.boost_stability_name'), description: t('dashboard.boost_stability_desc') };
         return null;
     };
     
@@ -235,7 +245,7 @@ const ActivityGrid: React.FC = () => {
                  <div className="p-6 bg-meebot-surface border border-meebot-border rounded-lg shadow-lg animate-fade-in">
                       <div className="flex items-center mb-3">
                         <Gift className="w-6 h-6 text-green-400 mr-3" />
-                        <h3 className="text-xl font-bold text-white">Active Mining Program</h3>
+                        <h3 className="text-xl font-bold text-white">{t('dashboard.active_program')}</h3>
                       </div>
                       <p className="text-lg font-bold text-green-300">{latestBot.miningGift.program}</p>
                       <p className="text-xs text-meebot-text-secondary/80">
@@ -247,7 +257,7 @@ const ActivityGrid: React.FC = () => {
                  <div className="p-6 bg-meebot-surface border border-meebot-border rounded-lg shadow-lg animate-fade-in">
                     <div className="flex items-center mb-3">
                         <Zap className="w-6 h-6 text-yellow-400 mr-3" />
-                        <h3 className="text-xl font-bold text-white">Emotion Boost</h3>
+                        <h3 className="text-xl font-bold text-white">{t('dashboard.emotion_boost')}</h3>
                     </div>
                     <p className="text-lg font-bold text-yellow-300">{boost.name}</p>
                     <p className="text-xs text-meebot-text-secondary/80">
