@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Palette, PlusCircle, Edit, Trash2, LoaderCircle, AlertTriangle, X, Save } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Palette, PlusCircle, Edit, Trash2, LoaderCircle, AlertTriangle, X, Save, Search, Copy, FileText } from 'lucide-react';
 import { usePersonas } from '../../contexts/PersonaContext';
 import { useMeeBots } from '../../contexts/MeeBotContext';
 import type { Persona } from '../../types';
@@ -9,7 +9,7 @@ import { Skeleton } from '../Skeleton';
 // Simple modal component
 const Modal: React.FC<{ children: React.ReactNode, onClose: () => void, title: string }> = ({ children, onClose, title }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-    <div className="bg-meebot-surface rounded-xl shadow-2xl p-6 w-full max-w-lg border border-meebot-border relative" onClick={e => e.stopPropagation()}>
+    <div className="bg-meebot-surface rounded-xl shadow-2xl p-6 w-full max-w-lg border border-meebot-border relative m-4" onClick={e => e.stopPropagation()}>
       <div className="flex justify-between items-center mb-6 border-b border-meebot-border/50 pb-4">
         <h3 className="text-xl font-bold text-white">{title}</h3>
         <button onClick={onClose} className="text-meebot-text-secondary hover:text-white transition-colors">
@@ -22,14 +22,14 @@ const Modal: React.FC<{ children: React.ReactNode, onClose: () => void, title: s
 );
 
 const PersonaForm: React.FC<{
-    persona?: Persona | null;
+    initialValues?: Persona | null;
     onSave: (data: Omit<Persona, 'id'>) => Promise<void>;
     onClose: () => void;
-}> = ({ persona, onSave, onClose }) => {
-    const [name, setName] = useState(persona?.name || '');
-    const [description, setDescription] = useState(persona?.description || '');
-    const [story, setStory] = useState(persona?.story || '');
-    const [stylePrompts, setStylePrompts] = useState(persona?.stylePrompts.join('\n') || '');
+}> = ({ initialValues, onSave, onClose }) => {
+    const [name, setName] = useState(initialValues?.name || '');
+    const [description, setDescription] = useState(initialValues?.description || '');
+    const [story, setStory] = useState(initialValues?.story || '');
+    const [stylePrompts, setStylePrompts] = useState(initialValues?.stylePrompts.join('\n') || '');
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState('');
 
@@ -60,7 +60,7 @@ const PersonaForm: React.FC<{
                     {error}
                 </div>
             )}
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                  <div>
                     <label htmlFor="name" className="block mb-1 text-sm font-bold text-meebot-text-secondary">Persona Name</label>
                     <input 
@@ -96,7 +96,7 @@ const PersonaForm: React.FC<{
                 </div>
                 <div>
                     <label htmlFor="prompts" className="block mb-1 text-sm font-bold text-meebot-text-secondary">Style Prompts</label>
-                    <p className="text-xs text-meebot-text-secondary/70 mb-2">Enter one art style prompt per line (e.g., "Neon lights", "Pixel art").</p>
+                    <p className="text-xs text-meebot-text-secondary/70 mb-2">Enter one art style prompt per line.</p>
                     <textarea 
                         id="prompts" 
                         rows={4} 
@@ -107,7 +107,7 @@ const PersonaForm: React.FC<{
                     />
                 </div>
             </div>
-            <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-meebot-border/50">
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-meebot-border/50">
                 <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-transparent border border-meebot-border text-meebot-text-secondary hover:text-white hover:border-white transition-colors font-semibold">
                     Cancel
                 </button>
@@ -123,27 +123,54 @@ const PersonaForm: React.FC<{
 export const PersonaManagementPage: React.FC = () => {
     const { personas, isLoading, addPersona, updatePersona, deletePersona } = usePersonas();
     const { notifyPersonaCreated } = useMeeBots();
+    
+    // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
+    const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+    const [initialFormData, setInitialFormData] = useState<Persona | null>(null);
+    const [targetId, setTargetId] = useState<string | null>(null); // For updates
 
-    const handleCreate = async (data: Omit<Persona, 'id'>) => {
-        await addPersona(data);
-        notifyPersonaCreated(); // Trigger mission/badge progress
-    };
+    // Search State
+    const [searchQuery, setSearchQuery] = useState('');
 
-    const handleEdit = async (data: Omit<Persona, 'id'>) => {
-        if (editingPersona) {
-            await updatePersona(editingPersona.id, data);
+    const filteredPersonas = useMemo(() => {
+        if (!searchQuery) return personas;
+        const lowerQ = searchQuery.toLowerCase();
+        return personas.filter(p => 
+            p.name.toLowerCase().includes(lowerQ) || 
+            p.description.toLowerCase().includes(lowerQ) ||
+            p.story.toLowerCase().includes(lowerQ)
+        );
+    }, [personas, searchQuery]);
+
+    const handleSave = async (data: Omit<Persona, 'id'>) => {
+        if (modalMode === 'edit' && targetId) {
+            await updatePersona(targetId, data);
+        } else {
+            await addPersona(data);
+            notifyPersonaCreated(); // Gamification hook
         }
     };
 
     const openCreateModal = () => {
-        setEditingPersona(null);
+        setModalMode('create');
+        setInitialFormData(null);
+        setTargetId(null);
         setIsModalOpen(true);
     };
 
     const openEditModal = (persona: Persona) => {
-        setEditingPersona(persona);
+        setModalMode('edit');
+        setInitialFormData(persona);
+        setTargetId(persona.id);
+        setIsModalOpen(true);
+    };
+
+    const openCloneModal = (persona: Persona) => {
+        setModalMode('create');
+        // Pre-fill with existing data but marked as a copy
+        setInitialFormData({ ...persona, name: `${persona.name} (Copy)` });
+        setTargetId(null);
         setIsModalOpen(true);
     };
 
@@ -155,6 +182,8 @@ export const PersonaManagementPage: React.FC = () => {
 
     return (
         <div className="p-4 md:p-8 animate-fade-in max-w-7xl mx-auto h-full overflow-y-auto">
+            
+            {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                  <div className="flex items-center">
                     <Palette className="w-10 h-10 text-meebot-primary mr-4" />
@@ -174,19 +203,36 @@ export const PersonaManagementPage: React.FC = () => {
                 </button>
             </div>
 
+            {/* Search Bar */}
+            <div className="mb-6 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-meebot-text-secondary" />
+                <input 
+                    type="text" 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search personas by name, description, or story..."
+                    className="w-full pl-10 pr-4 py-3 bg-meebot-surface border border-meebot-border rounded-xl text-white focus:border-meebot-primary focus:ring-1 focus:ring-meebot-primary outline-none transition-all placeholder-meebot-text-secondary/50"
+                />
+            </div>
+
+            {/* Modal */}
             {isModalOpen && (
                 <Modal 
                     onClose={() => setIsModalOpen(false)} 
-                    title={editingPersona ? "Edit Persona" : "Create New Persona"}
+                    title={
+                        modalMode === 'edit' ? "Edit Persona" : 
+                        initialFormData ? "Clone Persona" : "Create New Persona"
+                    }
                 >
                     <PersonaForm 
-                        persona={editingPersona} 
-                        onSave={editingPersona ? handleEdit : handleCreate} 
+                        initialValues={initialFormData} 
+                        onSave={handleSave} 
                         onClose={() => setIsModalOpen(false)} 
                     />
                 </Modal>
             )}
 
+            {/* Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {isLoading ? (
                     Array.from({ length: 3 }).map((_, i) => (
@@ -201,15 +247,33 @@ export const PersonaManagementPage: React.FC = () => {
                         </div>
                     ))
                 ) : (
-                    personas.map(persona => (
-                        <div key={persona.id} className="bg-meebot-surface border border-meebot-border rounded-xl p-6 flex flex-col hover:border-meebot-primary/50 transition-all duration-300 group hover:shadow-lg hover:shadow-meebot-primary/5">
+                    filteredPersonas.map(persona => (
+                        <div key={persona.id} className="bg-meebot-surface border border-meebot-border rounded-xl p-6 flex flex-col hover:border-meebot-primary/50 transition-all duration-300 group hover:shadow-lg hover:shadow-meebot-primary/5 relative">
+                            
                             <div className="flex justify-between items-start mb-4">
-                                <h3 className="text-xl font-bold text-white group-hover:text-meebot-primary transition-colors line-clamp-1">{persona.name}</h3>
-                                <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => openEditModal(persona)} className="p-2 text-meebot-text-secondary hover:text-white hover:bg-meebot-border rounded-lg transition-colors" title="Edit">
+                                <h3 className="text-xl font-bold text-white group-hover:text-meebot-primary transition-colors line-clamp-1 flex-1 pr-2">{persona.name}</h3>
+                                
+                                {/* Actions */}
+                                <div className="flex gap-1">
+                                    <button 
+                                        onClick={() => openCloneModal(persona)} 
+                                        className="p-2 text-meebot-text-secondary hover:text-white hover:bg-meebot-border rounded-lg transition-colors" 
+                                        title="Clone"
+                                    >
+                                        <Copy className="w-4 h-4"/>
+                                    </button>
+                                    <button 
+                                        onClick={() => openEditModal(persona)} 
+                                        className="p-2 text-meebot-text-secondary hover:text-blue-300 hover:bg-blue-500/10 rounded-lg transition-colors" 
+                                        title="Edit"
+                                    >
                                         <Edit className="w-4 h-4"/>
                                     </button>
-                                    <button onClick={() => handleDelete(persona.id)} className="p-2 text-meebot-text-secondary hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors" title="Delete">
+                                    <button 
+                                        onClick={() => handleDelete(persona.id)} 
+                                        className="p-2 text-meebot-text-secondary hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors" 
+                                        title="Delete"
+                                    >
                                         <Trash2 className="w-4 h-4"/>
                                     </button>
                                 </div>
@@ -220,7 +284,9 @@ export const PersonaManagementPage: React.FC = () => {
                             </p>
                             
                             <div className="text-xs text-meebot-text-secondary/80 bg-meebot-bg p-4 rounded-lg mb-4 flex-grow overflow-y-auto max-h-32 custom-scrollbar border border-meebot-border/50">
-                                <strong className="block text-meebot-primary mb-1 uppercase tracking-wider text-[10px]">Backstory</strong>
+                                <strong className="block text-meebot-primary mb-1 uppercase tracking-wider text-[10px] flex items-center gap-1">
+                                    <FileText className="w-3 h-3"/> Backstory
+                                </strong>
                                 {persona.story}
                             </div>
                             
@@ -235,17 +301,23 @@ export const PersonaManagementPage: React.FC = () => {
                 )}
             </div>
 
-            {!isLoading && personas.length === 0 && (
+            {!isLoading && filteredPersonas.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-20 bg-meebot-surface border border-dashed border-meebot-border rounded-xl text-meebot-text-secondary">
-                    <Palette className="w-16 h-16 mb-4 opacity-20" />
+                    <Search className="w-16 h-16 mb-4 opacity-20" />
                     <p className="text-xl font-bold text-white mb-2">No Personas Found</p>
-                    <p className="mb-6">Create your first custom persona to get started!</p>
-                    <button 
-                        onClick={openCreateModal}
-                        className="px-6 py-2 bg-meebot-surface border border-meebot-primary text-meebot-primary hover:bg-meebot-primary hover:text-white rounded-lg transition-colors font-bold"
-                    >
-                        Create Persona
-                    </button>
+                    {searchQuery ? (
+                        <p>No results match "{searchQuery}". Try a different term.</p>
+                    ) : (
+                        <>
+                            <p className="mb-6">Create your first custom persona to get started!</p>
+                            <button 
+                                onClick={openCreateModal}
+                                className="px-6 py-2 bg-meebot-surface border border-meebot-primary text-meebot-primary hover:bg-meebot-primary hover:text-white rounded-lg transition-colors font-bold"
+                            >
+                                Create Persona
+                            </button>
+                        </>
+                    )}
                 </div>
             )}
         </div>
